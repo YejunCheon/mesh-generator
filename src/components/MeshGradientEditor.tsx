@@ -1,6 +1,7 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../types';
 import DiscreteSlider from './DiscreteSlider';
+import * as htmlToImage from 'html-to-image';
 
 // 헥스 컬러를 RGBA로 변환하는 헬퍼 함수 추가
 const hexToRgba = (hex: string, alpha: number): string => {
@@ -29,6 +30,9 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   const [showFlavor, setShowFlavor] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
   const [backgroundOnly, setBackgroundOnly] = useState(false);
+  
+  // PNG 다운로드용 DOM 요소 참조
+  const cardRef = useRef<HTMLDivElement>(null);
 
   // 컬러 스프레드 기반 mesh gradient 생성 함수
   const generateMeshGradient = useCallback(() => {
@@ -88,125 +92,30 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
     };
   }, [colors, params.noiseIntensity]);
 
-  // PNG 이미지 다운로드 함수
+  // html-to-image를 사용한 PNG 다운로드 함수
   const handleDownload = useCallback(async () => {
+    if (!cardRef.current) {
+      alert('카드 요소를 찾을 수 없습니다.');
+      return;
+    }
+
     try {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        alert('Canvas를 지원하지 않는 브라우저입니다.');
-        return;
-      }
-
-      canvas.width = 800;
-      canvas.height = 600;
-
-      // 기본 배경색 설정
-      ctx.fillStyle = colors[0]?.hex || '#000000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // 컬러 스프레드 기반 그라디언트 생성
-      const basePoints = [
-        [0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]
-      ];
-      
-      const additionalPoints = [
-        [0.5, 0.0], [0.0, 0.5], [1.0, 0.5], [0.5, 1.0], [0.5, 0.5],
-        [0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]
-      ];
-      
-      const allPoints = [...basePoints, ...additionalPoints];
-
-      // 각 컬러를 정확한 위치에 그라디언트 원으로 그리기
-      colors.forEach((color, index) => {
-        const point = allPoints[index % allPoints.length];
-        const [x, y] = point;
-        
-        // 0.0~1.0 범위를 픽셀 좌표로 변환
-        const pixelX = x * canvas.width;
-        const pixelY = y * canvas.height;
-        
-        // 컬러 스프레드 기반 크기 조절
-        const baseRadius = 100;
-        const colorSpread = params.noiseIntensity / 20;
-        const radius = baseRadius + (colorSpread * 20) + (index * 15);
-        
-        // opacity 적용
-        const opacity = Math.min(0.8 + (index * 0.1), 1);
-        ctx.globalAlpha = opacity;
-        
-        // 그라디언트 원 생성
-        const gradient = ctx.createRadialGradient(pixelX, pixelY, 0, pixelX, pixelY, radius);
-        gradient.addColorStop(0, color.hex);
-        gradient.addColorStop(0.7, hexToRgba(color.hex, 0.4));
-        gradient.addColorStop(1, 'transparent');
-        
-        ctx.fillStyle = gradient;
-        ctx.beginPath();
-        ctx.arc(pixelX, pixelY, radius, 0, 2 * Math.PI);
-        ctx.fill();
-        
-        ctx.globalAlpha = 1; // 리셋
+      // html-to-image로 DOM 요소를 PNG로 변환 (실제 크기 그대로)
+      const dataUrl = await htmlToImage.toPng(cardRef.current, {
+        quality: 1.0
       });
-
-      // 텍스트 추가 - 새로운 레이아웃 적용
-      if (!backgroundOnly) {
-        ctx.fillStyle = 'white';
-        ctx.textAlign = 'left';
-        
-        // 원두 정보 (좌측 정렬, 작은 사이즈)
-        if (showName) {
-          ctx.font = 'bold 24px Arial';
-          const beanInfo = `${coffeeBean.origin.country}${coffeeBean.origin.region ? ` (${coffeeBean.origin.region})` : ''}${coffeeBean.origin.farm ? ` (${coffeeBean.origin.farm})` : ''} ${coffeeBean.beanName}`;
-          ctx.fillText(beanInfo, 40, 80);
-        }
-        
-        // Flavor notes (좌측 하단)
-        if (showFlavor && coffeeBean.flavorNotes.length > 0) {
-          ctx.font = '20px Arial';
-          ctx.fillText(coffeeBean.flavorNotes.slice(0, 3).join(' • '), 40, 500);
-        }
-        
-        // 강도 정보 (우측 하단)
-        if (showIntensity) {
-          ctx.textAlign = 'left';
-          ctx.font = '16px Arial';
-          
-          // 산도
-          ctx.fillText('산도', 600, 200);
-          ctx.fillStyle = '#e5e7eb';
-          ctx.fillRect(600, 210, 200, 4);
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(600, 210, (coffeeBean.intensity.acidity / 10) * 200, 4);
-          
-          // 당도
-          ctx.fillText('당도', 600, 250);
-          ctx.fillStyle = '#e5e7eb';
-          ctx.fillRect(600, 260, 200, 4);
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(600, 260, (coffeeBean.intensity.sweetness / 10) * 200, 4);
-          
-          // 바디감
-          ctx.fillText('바디감', 600, 300);
-          ctx.fillStyle = '#e5e7eb';
-          ctx.fillRect(600, 310, 200, 4);
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(600, 310, (coffeeBean.intensity.body / 10) * 200, 4);
-        }
-      }
 
       // PNG 다운로드
       const link = document.createElement('a');
       link.download = `${coffeeBean.beanName}_mesh_gradient.png`;
-      link.href = canvas.toDataURL('image/png');
+      link.href = dataUrl;
       link.click();
       
     } catch (error) {
       console.error('PNG 생성 중 오류:', error);
       alert('PNG 이미지 생성에 실패했습니다.');
     }
-  }, [colors, backgroundOnly, showName, showFlavor, showIntensity, coffeeBean, params.noiseIntensity]);
+  }, [coffeeBean.beanName]);
 
   const handleSaveToSupabase = () => {
     alert('Supabase 저장 기능은 Phase 2에서 구현됩니다!');
@@ -233,82 +142,83 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
             <h4 className="text-xl font-semibold text-black">미리보기</h4>
           </div>
           
-            {/* CSS 기반 mesh gradient */}
-            <div 
-              className="w-full h-80 relative"
-              style={{
-                background: gradientStyles.background,
-                backgroundImage: gradientStyles.backgroundImage,
-                borderRadius: '16px'
-              }}
-            >
-              {!backgroundOnly && (
-                <>
-                  {/* 원두 정보 (좌측 정렬, 작은 사이즈) */}
-                  {showName && (
-                    <div className="absolute top-6 left-6 text-left">
-                      <h3 className="text-white text-2xl font-bold drop-shadow-md leading-tight">
-                        {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.farm, coffeeBean.beanName].filter(Boolean).join(' ')}
-                      </h3>
-                    </div>
-                  )}
-                  
-                  {/* Flavor notes (좌측 하단, max-width로 오버플로우 방지) */}
-                  {showFlavor && coffeeBean.flavorNotes.length > 0 && (
-                    <div 
-                      className="absolute bottom-6 left-6 text-left"
-                      style={{ 
-                        maxWidth: 'calc(100% - 12rem)' // Intensity 영역 (w-48 ≈ 12rem) + 패딩 (right-6 + 여유) 고려
-                      }}
-                    >
-                      <p className="text-white text-md drop-shadow-md whitespace-normal break-words">
-                        {coffeeBean.flavorNotes.slice(0, 3).map((note, idx) => (
-                          <span key={idx} className="block">{note}</span>
-                        ))}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {/* 강도 정보 (우측 하단) */}
-                  {showIntensity && (
-                    <div className="absolute right-6 bottom-6">
-                      {/* 산도 */}
-                      <div className="mt-4">
-                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Acidity</span>
-                        <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-white rounded-full transition-all duration-300"
-                            style={{ width: `${(coffeeBean.intensity.acidity / 10) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                      
-                      {/* Sweetness */}
-                      <div className="mt-4">
-                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Sweetness</span>
-                        <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-white rounded-full transition-all duration-300"
-                            style={{ width: `${(coffeeBean.intensity.sweetness / 10) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                      
-                      {/* Body */}
-                      <div className="mt-4">
-                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Body</span>
-                        <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-white rounded-full transition-all duration-300"
-                            style={{ width: `${(coffeeBean.intensity.body / 10) * 100}%` }}
-                          />
-                        </div>
+          {/* PNG 다운로드용 카드 요소 (ref 추가) */}
+          <div 
+            ref={cardRef}
+            className="w-full h-80 relative"
+            style={{
+              background: gradientStyles.background,
+              backgroundImage: gradientStyles.backgroundImage,
+              borderRadius: '16px'
+            }}
+          >
+            {!backgroundOnly && (
+              <>
+                {/* 원두 정보 (좌측 정렬, 작은 사이즈) */}
+                {showName && (
+                  <div className="absolute top-6 left-6 text-left">
+                    <h3 className="text-white text-2xl font-bold drop-shadow-md leading-tight">
+                      {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.farm, coffeeBean.beanName].filter(Boolean).join(' ')}
+                    </h3>
+                  </div>
+                )}
+                
+                {/* Flavor notes (좌측 하단, max-width로 오버플로우 방지) */}
+                {showFlavor && coffeeBean.flavorNotes.length > 0 && (
+                  <div 
+                    className="absolute bottom-6 left-6 text-left"
+                    style={{ 
+                      maxWidth: 'calc(100% - 12rem)' // Intensity 영역 (w-48 ≈ 12rem) + 패딩 (right-6 + 여유) 고려
+                    }}
+                  >
+                    <p className="text-white text-md drop-shadow-md whitespace-normal break-words">
+                      {coffeeBean.flavorNotes.slice(0, 3).map((note, idx) => (
+                        <span key={idx} className="block">{note}</span>
+                      ))}
+                    </p>
+                  </div>
+                )}
+                
+                {/* 강도 정보 (우측 하단) */}
+                {showIntensity && (
+                  <div className="absolute right-6 bottom-6">
+                    {/* 산도 */}
+                    <div className="mt-4">
+                      <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Acidity</span>
+                      <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-white rounded-full transition-all duration-300"
+                          style={{ width: `${(coffeeBean.intensity.acidity / 10) * 100}%` }}
+                        />
                       </div>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
+                    
+                    {/* Sweetness */}
+                    <div className="mt-4">
+                      <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Sweetness</span>
+                      <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-white rounded-full transition-all duration-300"
+                          style={{ width: `${(coffeeBean.intensity.sweetness / 10) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Body */}
+                    <div className="mt-4">
+                      <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Body</span>
+                      <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-white rounded-full transition-all duration-300"
+                          style={{ width: `${(coffeeBean.intensity.body / 10) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
           
           <div className="flex space-x-4">
             <button
