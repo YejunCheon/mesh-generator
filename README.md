@@ -1,46 +1,114 @@
-# Getting Started with Create React App
+# Mesh Gradient Card Generator
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+커피 원두의 특성을 시각적으로 표현하는 메시 그라디언트 카드를 생성하는 웹 애플리케이션입니다.
 
-## Available Scripts
+## 🚀 시작하기
 
-In the project directory, you can run:
+### 1. 프로젝트 설치
 
-### `npm start`
+```bash
+npm install
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### 2. Gemini API 키 설정
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+1. [Google AI Studio](https://makersuite.google.com/app/apikey)에서 API 키를 발급받으세요
+2. 프로젝트 루트에 `.env` 파일을 생성하고 다음 내용을 추가하세요:
 
-### `npm test`
+```env
+REACT_APP_GEMINI_API_KEY=your_gemini_api_key_here
+```
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### 3. 개발 서버 실행
 
-### `npm run build`
+```bash
+npm start
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 애플리케이션을 확인하세요.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## ✨ 주요 기능
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- **원두 정보 입력**: 국가, 지역, 농장명, 원두명, 배전도
+- **Flavor Note 선택**: SCA 표준 기반의 체계적 분류
+- **강도 지표**: 산도, 당도, 바디감 (1-10 스케일)
+- **AI 컬러 추천**: Gemini API를 활용한 지능형 컬러 추천
+- **메시 그라디언트 생성**: SVG 기반의 고품질 이미지 생성
 
-### `npm run eject`
+## 🛠️ 기술 스택
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **AI API**: Google Gemini 1.5 Flash
+- **UI Components**: Custom DiscreteSlider, 반응형 디자인
+- **State Management**: React Hooks, Context API
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## 📱 반응형 디자인
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+- **모바일**: Progress bar에서 step 명칭 숨김, dot만 표시
+- **데스크톱**: 모든 정보 표시, 최적화된 레이아웃
+- **태블릿**: 중간 크기 화면에 최적화된 UI
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+## 🔑 API 키 설정 없이 테스트
 
-## Learn More
+Gemini API 키를 설정하지 않으면 기본 컬러 팔레트가 제공됩니다:
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- 사들 브라운 (#8B4513)
+- 초콜릿 (#D2691E)
+- 페루 (#CD853F)
+- 샌드 (#F4A460)
+- 다크 슬레이트 (#2F4F4F)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 📁 프로젝트 구조
+
+```
+src/
+├── components/          # React 컴포넌트
+│   ├── CoffeeInputForm.tsx
+│   ├── ColorRecommendation.tsx
+│   ├── DiscreteSlider.tsx
+│   └── MeshGradientEditor.tsx
+├── services/           # API 서비스
+│   └── geminiService.ts
+├── types/             # TypeScript 타입 정의
+│   └── index.ts
+├── data/              # 정적 데이터
+│   └── flavor-wheel.ts
+└── App.tsx           # 메인 애플리케이션
+```
+
+## 🎯 사용법
+
+1. **원두 정보 입력**: 국가, 원두명, 배전도 순서로 입력
+2. **Flavor & 강도**: SCA 표준 기반의 플레이버 노트 선택 및 강도 조정
+3. **AI 컬러 추천**: Gemini API를 활용한 지능형 컬러 추천
+4. **컬러 선택**: 추천된 컬러 중 최대 5개 선택
+5. **메시 그라디언트 생성**: 선택된 컬러로 고품질 이미지 생성
+
+## 🔧 개발
+
+### 빌드
+
+```bash
+npm run build
+```
+
+### 테스트
+
+```bash
+npm test
+```
+
+### 린트
+
+```bash
+npm run lint
+```
+
+## 📄 라이선스
+
+MIT License
+
+## 🤝 기여
+
+버그 리포트나 기능 제안은 이슈로 등록해주세요.
+Pull Request도 환영합니다!
