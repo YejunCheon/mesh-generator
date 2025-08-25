@@ -1,5 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../types';
+import DiscreteSlider from './DiscreteSlider';
+
+// 헥스 컬러를 RGBA로 변환하는 헬퍼 함수 추가
+const hexToRgba = (hex: string, alpha: number): string => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
 
 interface MeshGradientEditorProps {
   coffeeBean: CoffeeBean;
@@ -16,98 +25,203 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   onParamsChange,
   onBack
 }) => {
-  const [svgData, setSvgData] = useState<string>('');
   const [showName, setShowName] = useState(true);
   const [showFlavor, setShowFlavor] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
   const [backgroundOnly, setBackgroundOnly] = useState(false);
 
-  const generateSVG = useCallback(() => {
-    const width = 800;
-    const height = 600;
+  // 웹 호환 mesh gradient 생성 함수 (수정됨)
+  const generateMeshGradient = useCallback(() => {
+    if (colors.length === 0) {
+      return {
+        background: '#000000',
+        backgroundImage: 'none',
+      };
+    }
+
+    // rn-mesh-gradient와 동일한 방식으로 points 정의
+    const basePoints = [
+      [0.0, 0.0], [1.0, 0.0],
+      [0.0, 1.0], [1.0, 1.0]
+    ];
+
+    // 컬러 수에 따라 추가 중간점 생성
+    const additionalPoints = [];
+    if (colors.length > 4) {
+      additionalPoints.push(
+        [0.5, 0.0], [0.0, 0.5], [1.0, 0.5], [0.5, 1.0], [0.5, 0.5],
+        [0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]
+      );
+    }
+
+    const allPoints = [...basePoints, ...additionalPoints];
     
-    // Create mesh gradient with selected colors
-    const gradientStops = colors.map((color, index) => {
-      const offset = (index / (colors.length - 1)) * 100;
-      return `${color.hex} ${offset}%`;
-    }).join(', ');
+    // 각 컬러를 points 배열의 위치에 정확히 배치
+    const gradients = colors.map((color, index) => {
+      const point = allPoints[index % allPoints.length];
+      const [x, y] = point;
+      
+      // 0.0~1.0 범위를 퍼센트로 변환
+      const xPercent = x * 100;
+      const yPercent = y * 100;
+      
+      // rn-mesh-gradient의 frequency 개념을 활용한 크기 조절
+      const baseSize = 40;
+      const frequency = params.noiseIntensity / 20;
+      const size = baseSize + (frequency * 10) + (index * 5);
+      
+      // 각 컬러의 투명도를 다르게 하여 mesh 효과 강화
+      const opacity = Math.min(0.8 + (index * 0.1), 1); // 1을 초과하지 않도록 제한
+      
+      // 수정: 올바른 radial-gradient syntax 사용, opacity를 rgba로 적용
+      return `radial-gradient(at ${xPercent}% ${yPercent}%, ${hexToRgba(color.hex, opacity)} 0%, transparent ${size}%)`;
+    });
 
-    // Generate noise pattern based on noise intensity
-    const noisePattern = generateNoisePattern(params.noiseIntensity);
+    // 첫 번째 컬러를 기본 배경으로 사용
+    const baseColor = colors[0]?.hex || '#000000';
     
-    // Create SVG content
-    const svgContent = `
-      <svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="meshGradient" cx="50%" cy="50%" r="70%">
-            ${colors.map((color, index) => `
-              <stop offset="${(index / (colors.length - 1)) * 100}%" stop-color="${color.hex}" />
-            `).join('')}
-          </radialGradient>
-          <filter id="noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" seed="1">
-              <animate attributeName="baseFrequency" values="0.8;1.2;0.8" dur="10s" repeatCount="indefinite"/>
-            </feTurbulence>
-            <feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 ${params.noiseIntensity / 100} 0"/>
-          </filter>
-        </defs>
+    // 모든 그라디언트를 결합하여 mesh 구조 생성
+    const backgroundImage = gradients.join(', ');
+    
+    return {
+      background: baseColor,
+      backgroundImage: backgroundImage,
+    };
+  }, [colors, params.noiseIntensity]);
+
+  // PNG 이미지 다운로드 함수 (canvas 부분도 약간 수정: opacity 적용)
+  const handleDownload = useCallback(async () => {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        alert('Canvas를 지원하지 않는 브라우저입니다.');
+        return;
+      }
+
+      canvas.width = 800;
+      canvas.height = 600;
+
+      // 기본 배경색 설정
+      ctx.fillStyle = colors[0]?.hex || '#000000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // rn-mesh-gradient 방식으로 points 기반 그라디언트 생성
+      const basePoints = [
+        [0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]
+      ];
+      
+      const additionalPoints = [
+        [0.5, 0.0], [0.0, 0.5], [1.0, 0.5], [0.5, 1.0], [0.5, 0.5],
+        [0.25, 0.25], [0.75, 0.25], [0.25, 0.75], [0.75, 0.75]
+      ];
+      
+      const allPoints = [...basePoints, ...additionalPoints];
+
+      // 각 컬러를 정확한 위치에 그라디언트 원으로 그리기
+      colors.forEach((color, index) => {
+        const point = allPoints[index % allPoints.length];
+        const [x, y] = point;
         
-        <rect width="100%" height="100%" fill="url(#meshGradient)" filter="url(#noise)"/>
+        // 0.0~1.0 범위를 픽셀 좌표로 변환
+        const pixelX = x * canvas.width;
+        const pixelY = y * canvas.height;
         
-        ${!backgroundOnly ? `
-          <g transform="rotate(${params.gradientDirection})">
-            ${showName ? `
-              <text x="50%" y="30%" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="bold" fill="white" filter="drop-shadow(2px 2px 4px rgba(0,0,0,0.5))">
-                ${coffeeBean.beanName}
-              </text>
-            ` : ''}
-            
-            ${showFlavor && coffeeBean.flavorNotes.length > 0 ? `
-              <text x="50%" y="45%" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="white" filter="drop-shadow(1px 1px 2px rgba(0,0,0,0.5))">
-                ${coffeeBean.flavorNotes.slice(0, 3).join(' • ')}
-              </text>
-            ` : ''}
-            
-            ${showIntensity ? `
-              <g transform="translate(50%, 60%)">
-                <text text-anchor="middle" font-family="Arial, sans-serif" font-size="18" fill="white" filter="drop-shadow(1px 1px 2px rgba(0,0,0,0.5))">
-                  산도 ${coffeeBean.intensity.acidity}/10 • 당도 ${coffeeBean.intensity.sweetness}/10 • 바디감 ${coffeeBean.intensity.body}/10
-                </text>
-              </g>
-            ` : ''}
-          </g>
-        ` : ''}
-      </svg>
-    `;
+        // frequency 기반 크기 조절
+        const baseRadius = 100;
+        const frequency = params.noiseIntensity / 20;
+        const radius = baseRadius + (frequency * 20) + (index * 15);
+        
+        // opacity 적용 (canvas에서는 globalAlpha 사용)
+        const opacity = Math.min(0.8 + (index * 0.1), 1);
+        ctx.globalAlpha = opacity;
+        
+        // 그라디언트 원 생성 (기존 colorStop 조정)
+        const gradient = ctx.createRadialGradient(pixelX, pixelY, 0, pixelX, pixelY, radius);
+        gradient.addColorStop(0, color.hex); // 불투명 시작
+        gradient.addColorStop(0.7, hexToRgba(color.hex, 0.4)); // 중간 투명도
+        gradient.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(pixelX, pixelY, radius, 0, 2 * Math.PI);
+        ctx.fill();
+        
+        ctx.globalAlpha = 1; // 리셋
+      });
 
-    setSvgData(svgContent);
-  }, [params, colors, showName, showFlavor, showIntensity, backgroundOnly, coffeeBean]);
+      // 텍스트 추가 - 새로운 레이아웃 적용
+      if (!backgroundOnly) {
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'left';
+        
+                  // 원두 정보 (좌측 정렬, 작은 사이즈)
+          if (showName) {
+            ctx.font = 'bold 24px Arial';
+            const beanInfo = `${coffeeBean.origin.country}${coffeeBean.origin.region ? ` (${coffeeBean.origin.region})` : ''}${coffeeBean.origin.farm ? ` (${coffeeBean.origin.farm})` : ''} ${coffeeBean.beanName}`;
+            ctx.fillText(beanInfo, 40, 80);
+          }
+        
+        // Flavor notes (가운데 정렬, 하단)
+        if (showFlavor && coffeeBean.flavorNotes.length > 0) {
+          ctx.font = '20px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText(coffeeBean.flavorNotes.slice(0, 3).join(' • '), canvas.width / 2, 500);
+        }
+        
+        // 강도 정보 (DiscreteSlider 스타일로 시각화)
+        if (showIntensity) {
+          ctx.textAlign = 'left';
+          ctx.font = '16px Arial';
+          
+          // 산도
+          ctx.fillText('산도', 40, 200);
+          ctx.fillStyle = '#e5e7eb';
+          ctx.fillRect(40, 210, 200, 4);
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(40, 210, (coffeeBean.intensity.acidity / 10) * 200, 4);
+          
+          // 당도
+          ctx.fillText('당도', 40, 250);
+          ctx.fillStyle = '#e5e7eb';
+          ctx.fillRect(40, 260, 200, 4);
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(40, 260, (coffeeBean.intensity.sweetness / 10) * 200, 4);
+          
+          // 바디감
+          ctx.fillText('바디감', 40, 300);
+          ctx.fillStyle = '#e5e7eb';
+          ctx.fillRect(40, 310, 200, 4);
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(40, 310, (coffeeBean.intensity.body / 10) * 200, 4);
+        }
+      }
 
-  const generateNoisePattern = (intensity: number) => {
-    // Simple noise pattern generation
-    return Array.from({ length: 20 }, () => Math.random() * intensity / 100).join(' ');
-  };
-
-  useEffect(() => {
-    generateSVG();
-  }, [generateSVG]);
-
-  const handleDownload = () => {
-    const blob = new Blob([svgData], { type: 'image/svg+xml' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${coffeeBean.beanName}_${new Date().toISOString().split('T')[0]}.svg`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
+      // PNG 다운로드
+      const link = document.createElement('a');
+      link.download = `${coffeeBean.beanName}_mesh_gradient.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+    } catch (error) {
+      console.error('PNG 생성 중 오류:', error);
+      alert('PNG 이미지 생성에 실패했습니다.');
+    }
+  }, [colors, backgroundOnly, showName, showFlavor, showIntensity, coffeeBean, params.noiseIntensity]);
 
   const handleSaveToSupabase = () => {
-    // TODO: Implement Supabase save functionality
     alert('Supabase 저장 기능은 Phase 2에서 구현됩니다!');
   };
+
+  // 현재 gradient 스타일
+  const gradientStyles = useMemo(() => generateMeshGradient(), [generateMeshGradient]);
+
+  // 강도 옵션 생성 (1-10)
+  const intensityOptions = Array.from({ length: 10 }, (_, i) => ({
+    value: i + 1,
+    label: (i + 1).toString()
+  }));
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
@@ -123,12 +237,84 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Preview */}
         <div className="space-y-6">
-          <h4 className="text-xl font-semibold text-black">미리보기</h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-xl font-semibold text-black">미리보기</h4>
+          </div>
           <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg">
+            {/* CSS 기반 mesh gradient */}
             <div 
-              className="w-full h-96 flex items-center justify-center"
-              dangerouslySetInnerHTML={{ __html: svgData }}
-            />
+              className="w-full h-96 relative"
+              style={{
+                background: gradientStyles.background,
+                backgroundImage: gradientStyles.backgroundImage,
+                borderRadius: params.borderStyle === 'rounded' ? '16px' : '0px'
+              }}
+            >
+              {!backgroundOnly && (
+                <>
+                  {/* 원두 정보 (좌측 정렬, 작은 사이즈) */}
+                  {showName && (
+                    <div className="absolute top-6 left-6 text-left">
+                      <h3 className="text-white text-2xl font-bold drop-shadow-md leading-tight">
+                        {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.farm, coffeeBean.beanName].filter(Boolean).join(' ')}
+                      </h3>
+                    </div>
+                  )}
+                  
+                  {/* Flavor notes (좌측 하단, max-width로 오버플로우 방지) */}
+                  {showFlavor && coffeeBean.flavorNotes.length > 0 && (
+                    <div 
+                      className="absolute bottom-6 left-6 text-left"
+                      style={{ 
+                        maxWidth: 'calc(100% - 16rem)' // Intensity 영역 (w-48 ≈ 12rem) + 패딩 (right-6 + 여유) 고려
+                      }}
+                    >
+                      <p className="text-white text-lg drop-shadow-md whitespace-normal break-words">
+                        {coffeeBean.flavorNotes.slice(0, 3).join(' • ')}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* 강도 정보 (DiscreteSlider 스타일) */}
+                  {showIntensity && (
+                    <div className="absolute right-6 bottom-6">
+                      {/* 산도 */}
+                      <div className="mb-4">
+                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">산도</span>
+                        <div className="w-48 h-2 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-white rounded-full transition-all duration-300"
+                            style={{ width: `${(coffeeBean.intensity.acidity / 10) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* 당도 */}
+                      <div className="mb-4">
+                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">당도</span>
+                        <div className="w-48 h-2 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-white rounded-full transition-all duration-300"
+                            style={{ width: `${(coffeeBean.intensity.sweetness / 10) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                      
+                      {/* 바디감 */}
+                      <div className="mb-4">
+                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">바디감</span>
+                        <div className="w-48 h-2 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-white rounded-full transition-all duration-300"
+                            style={{ width: `${(coffeeBean.intensity.body / 10) * 100}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
           
           <div className="flex space-x-4">
@@ -136,7 +322,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
               onClick={handleDownload}
               className="btn-primary flex-1"
             >
-              SVG 다운로드
+              PNG 이미지 다운로드
             </button>
             <button
               onClick={handleSaveToSupabase}
@@ -174,7 +360,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                   disabled={backgroundOnly}
                   className="mr-4 text-black focus:ring-black w-5 h-5 disabled:opacity-50"
                 />
-                <span className="font-medium">원두명 표시</span>
+                <span className="font-medium">원두 정보 표시</span>
               </label>
               
               <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
@@ -256,6 +442,8 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                 <option value="overlay">오버레이</option>
                 <option value="multiply">멀티플라이</option>
                 <option value="screen">스크린</option>
+                <option value="soft-light">소프트 라이트</option>
+                <option value="hard-light">하드 라이트</option>
               </select>
             </div>
 
@@ -301,7 +489,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
         </button>
         
         <div className="text-sm text-gray-500">
-          완성된 카드를 다운로드하거나 Supabase에 저장할 수 있어요
+          완성된 카드를 PNG 이미지로 다운로드하거나 Supabase에 저장할 수 있어요
         </div>
       </div>
     </div>

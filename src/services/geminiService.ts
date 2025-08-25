@@ -19,7 +19,8 @@ export const generateColorsWithGemini = async (coffeeBean: CoffeeBean): Promise<
     // 프롬프트 구성
     const prompt = `
 당신은 커피 전문가이자 컬러 디자이너입니다. 
-다음 커피 원두의 특성을 분석하여 5개의 컬러를 추천해주세요.
+다음 커피 원두의 특성을 분석하여 5개의 컬러를 추천해주세요. 다채로운 컬러를 추천해주셔야합니다. 꼭 커피라고 해서 brown 계열을 추천할 필요없어요.
+5개의 컬러는 너무 비슷하면 안되고 조화를 이루어야합니다.
 
 커피 정보:
 - 원산지: ${coffeeBean.origin.country}${coffeeBean.origin.region ? `, ${coffeeBean.origin.region}` : ''}${coffeeBean.origin.farm ? `, ${coffeeBean.origin.farm}` : ''}
