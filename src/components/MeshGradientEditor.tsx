@@ -30,7 +30,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   const [showIntensity, setShowIntensity] = useState(true);
   const [backgroundOnly, setBackgroundOnly] = useState(false);
 
-  // 웹 호환 mesh gradient 생성 함수 (수정됨)
+  // 컬러 스프레드 기반 mesh gradient 생성 함수
   const generateMeshGradient = useCallback(() => {
     if (colors.length === 0) {
       return {
@@ -39,13 +39,13 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
       };
     }
 
-    // rn-mesh-gradient와 동일한 방식으로 points 정의
+    // 기본 포인트 정의 (4개 모서리)
     const basePoints = [
       [0.0, 0.0], [1.0, 0.0],
       [0.0, 1.0], [1.0, 1.0]
     ];
 
-    // 컬러 수에 따라 추가 중간점 생성
+    // 컬러 스프레드 값에 따라 추가 중간점 생성
     const additionalPoints = [];
     if (colors.length > 4) {
       additionalPoints.push(
@@ -56,7 +56,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
 
     const allPoints = [...basePoints, ...additionalPoints];
     
-    // 각 컬러를 points 배열의 위치에 정확히 배치
+    // 각 컬러를 points 배열의 위치에 배치
     const gradients = colors.map((color, index) => {
       const point = allPoints[index % allPoints.length];
       const [x, y] = point;
@@ -65,15 +65,14 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
       const xPercent = x * 100;
       const yPercent = y * 100;
       
-      // rn-mesh-gradient의 frequency 개념을 활용한 크기 조절
+      // 컬러 스프레드 값에 따른 크기 조절
       const baseSize = 40;
-      const frequency = params.noiseIntensity / 20;
-      const size = baseSize + (frequency * 10) + (index * 5);
+      const colorSpread = params.noiseIntensity / 20; // 0-5 범위
+      const size = baseSize + (colorSpread * 10) + (index * 5);
       
       // 각 컬러의 투명도를 다르게 하여 mesh 효과 강화
-      const opacity = Math.min(0.8 + (index * 0.1), 1); // 1을 초과하지 않도록 제한
+      const opacity = Math.min(0.8 + (index * 0.1), 1);
       
-      // 수정: 올바른 radial-gradient syntax 사용, opacity를 rgba로 적용
       return `radial-gradient(at ${xPercent}% ${yPercent}%, ${hexToRgba(color.hex, opacity)} 0%, transparent ${size}%)`;
     });
 
@@ -89,7 +88,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
     };
   }, [colors, params.noiseIntensity]);
 
-  // PNG 이미지 다운로드 함수 (canvas 부분도 약간 수정: opacity 적용)
+  // PNG 이미지 다운로드 함수
   const handleDownload = useCallback(async () => {
     try {
       const canvas = document.createElement('canvas');
@@ -107,7 +106,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
       ctx.fillStyle = colors[0]?.hex || '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // rn-mesh-gradient 방식으로 points 기반 그라디언트 생성
+      // 컬러 스프레드 기반 그라디언트 생성
       const basePoints = [
         [0.0, 0.0], [1.0, 0.0], [0.0, 1.0], [1.0, 1.0]
       ];
@@ -128,19 +127,19 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
         const pixelX = x * canvas.width;
         const pixelY = y * canvas.height;
         
-        // frequency 기반 크기 조절
+        // 컬러 스프레드 기반 크기 조절
         const baseRadius = 100;
-        const frequency = params.noiseIntensity / 20;
-        const radius = baseRadius + (frequency * 20) + (index * 15);
+        const colorSpread = params.noiseIntensity / 20;
+        const radius = baseRadius + (colorSpread * 20) + (index * 15);
         
-        // opacity 적용 (canvas에서는 globalAlpha 사용)
+        // opacity 적용
         const opacity = Math.min(0.8 + (index * 0.1), 1);
         ctx.globalAlpha = opacity;
         
-        // 그라디언트 원 생성 (기존 colorStop 조정)
+        // 그라디언트 원 생성
         const gradient = ctx.createRadialGradient(pixelX, pixelY, 0, pixelX, pixelY, radius);
-        gradient.addColorStop(0, color.hex); // 불투명 시작
-        gradient.addColorStop(0.7, hexToRgba(color.hex, 0.4)); // 중간 투명도
+        gradient.addColorStop(0, color.hex);
+        gradient.addColorStop(0.7, hexToRgba(color.hex, 0.4));
         gradient.addColorStop(1, 'transparent');
         
         ctx.fillStyle = gradient;
@@ -156,45 +155,44 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
         ctx.fillStyle = 'white';
         ctx.textAlign = 'left';
         
-                  // 원두 정보 (좌측 정렬, 작은 사이즈)
-          if (showName) {
-            ctx.font = 'bold 24px Arial';
-            const beanInfo = `${coffeeBean.origin.country}${coffeeBean.origin.region ? ` (${coffeeBean.origin.region})` : ''}${coffeeBean.origin.farm ? ` (${coffeeBean.origin.farm})` : ''} ${coffeeBean.beanName}`;
-            ctx.fillText(beanInfo, 40, 80);
-          }
-        
-        // Flavor notes (가운데 정렬, 하단)
-        if (showFlavor && coffeeBean.flavorNotes.length > 0) {
-          ctx.font = '20px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText(coffeeBean.flavorNotes.slice(0, 3).join(' • '), canvas.width / 2, 500);
+        // 원두 정보 (좌측 정렬, 작은 사이즈)
+        if (showName) {
+          ctx.font = 'bold 24px Arial';
+          const beanInfo = `${coffeeBean.origin.country}${coffeeBean.origin.region ? ` (${coffeeBean.origin.region})` : ''}${coffeeBean.origin.farm ? ` (${coffeeBean.origin.farm})` : ''} ${coffeeBean.beanName}`;
+          ctx.fillText(beanInfo, 40, 80);
         }
         
-        // 강도 정보 (DiscreteSlider 스타일로 시각화)
+        // Flavor notes (좌측 하단)
+        if (showFlavor && coffeeBean.flavorNotes.length > 0) {
+          ctx.font = '20px Arial';
+          ctx.fillText(coffeeBean.flavorNotes.slice(0, 3).join(' • '), 40, 500);
+        }
+        
+        // 강도 정보 (우측 하단)
         if (showIntensity) {
           ctx.textAlign = 'left';
           ctx.font = '16px Arial';
           
           // 산도
-          ctx.fillText('산도', 40, 200);
+          ctx.fillText('산도', 600, 200);
           ctx.fillStyle = '#e5e7eb';
-          ctx.fillRect(40, 210, 200, 4);
+          ctx.fillRect(600, 210, 200, 4);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(40, 210, (coffeeBean.intensity.acidity / 10) * 200, 4);
+          ctx.fillRect(600, 210, (coffeeBean.intensity.acidity / 10) * 200, 4);
           
           // 당도
-          ctx.fillText('당도', 40, 250);
+          ctx.fillText('당도', 600, 250);
           ctx.fillStyle = '#e5e7eb';
-          ctx.fillRect(40, 260, 200, 4);
+          ctx.fillRect(600, 260, 200, 4);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(40, 260, (coffeeBean.intensity.sweetness / 10) * 200, 4);
+          ctx.fillRect(600, 260, (coffeeBean.intensity.sweetness / 10) * 200, 4);
           
           // 바디감
-          ctx.fillText('바디감', 40, 300);
+          ctx.fillText('바디감', 600, 300);
           ctx.fillStyle = '#e5e7eb';
-          ctx.fillRect(40, 310, 200, 4);
+          ctx.fillRect(600, 310, 200, 4);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(40, 310, (coffeeBean.intensity.body / 10) * 200, 4);
+          ctx.fillRect(600, 310, (coffeeBean.intensity.body / 10) * 200, 4);
         }
       }
 
@@ -217,12 +215,6 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   // 현재 gradient 스타일
   const gradientStyles = useMemo(() => generateMeshGradient(), [generateMeshGradient]);
 
-  // 강도 옵션 생성 (1-10)
-  const intensityOptions = Array.from({ length: 10 }, (_, i) => ({
-    value: i + 1,
-    label: (i + 1).toString()
-  }));
-
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
       <div className="mb-8">
@@ -234,20 +226,20 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Preview */}
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <h4 className="text-xl font-semibold text-black">미리보기</h4>
           </div>
-          <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white shadow-lg">
+          
             {/* CSS 기반 mesh gradient */}
             <div 
-              className="w-full h-96 relative"
+              className="w-full h-80 relative"
               style={{
                 background: gradientStyles.background,
                 backgroundImage: gradientStyles.backgroundImage,
-                borderRadius: params.borderStyle === 'rounded' ? '16px' : '0px'
+                borderRadius: '16px'
               }}
             >
               {!backgroundOnly && (
@@ -266,22 +258,24 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                     <div 
                       className="absolute bottom-6 left-6 text-left"
                       style={{ 
-                        maxWidth: 'calc(100% - 16rem)' // Intensity 영역 (w-48 ≈ 12rem) + 패딩 (right-6 + 여유) 고려
+                        maxWidth: 'calc(100% - 12rem)' // Intensity 영역 (w-48 ≈ 12rem) + 패딩 (right-6 + 여유) 고려
                       }}
                     >
-                      <p className="text-white text-lg drop-shadow-md whitespace-normal break-words">
-                        {coffeeBean.flavorNotes.slice(0, 3).join(' • ')}
+                      <p className="text-white text-md drop-shadow-md whitespace-normal break-words">
+                        {coffeeBean.flavorNotes.slice(0, 3).map((note, idx) => (
+                          <span key={idx} className="block">{note}</span>
+                        ))}
                       </p>
                     </div>
                   )}
                   
-                  {/* 강도 정보 (DiscreteSlider 스타일) */}
+                  {/* 강도 정보 (우측 하단) */}
                   {showIntensity && (
                     <div className="absolute right-6 bottom-6">
                       {/* 산도 */}
-                      <div className="mb-4">
-                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">산도</span>
-                        <div className="w-48 h-2 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                      <div className="mt-4">
+                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Acidity</span>
+                        <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-white rounded-full transition-all duration-300"
                             style={{ width: `${(coffeeBean.intensity.acidity / 10) * 100}%` }}
@@ -289,10 +283,10 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                         </div>
                       </div>
                       
-                      {/* 당도 */}
-                      <div className="mb-4">
-                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">당도</span>
-                        <div className="w-48 h-2 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                      {/* Sweetness */}
+                      <div className="mt-4">
+                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Sweetness</span>
+                        <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-white rounded-full transition-all duration-300"
                             style={{ width: `${(coffeeBean.intensity.sweetness / 10) * 100}%` }}
@@ -300,10 +294,10 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                         </div>
                       </div>
                       
-                      {/* 바디감 */}
-                      <div className="mb-4">
-                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">바디감</span>
-                        <div className="w-48 h-2 bg-white bg-opacity-30 rounded-full overflow-hidden">
+                      {/* Body */}
+                      <div className="mt-4">
+                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Body</span>
+                        <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-white rounded-full transition-all duration-300"
                             style={{ width: `${(coffeeBean.intensity.body / 10) * 100}%` }}
@@ -315,7 +309,6 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                 </>
               )}
             </div>
-          </div>
           
           <div className="flex space-x-4">
             <button
@@ -387,13 +380,13 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
             </div>
           </div>
 
-          {/* Gradient Parameters */}
+          {/* Mesh Gradient Parameters */}
           <div className="space-y-6">
-            <h5 className="text-lg font-semibold text-black">그라디언트 파라미터</h5>
+            <h5 className="text-lg font-semibold text-black">메시 그라디언트 설정</h5>
             
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
-                노이즈 강도: {params.noiseIntensity}%
+                컬러 스프레드: {params.noiseIntensity}%
               </label>
               <input
                 type="range"
@@ -404,77 +397,13 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                 className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
               />
               <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>0%</span>
+                <span>집중</span>
                 <span className="font-semibold">{params.noiseIntensity}%</span>
-                <span>100%</span>
+                <span>확산</span>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                그라디언트 방향: {params.gradientDirection}°
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="360"
-                value={params.gradientDirection}
-                onChange={(e) => onParamsChange({ ...params, gradientDirection: parseInt(e.target.value) })}
-                className="w-full h-3 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-              <div className="flex justify-between text-xs text-gray-500 mt-2">
-                <span>0°</span>
-                <span className="font-semibold">{params.gradientDirection}°</span>
-                <span>360°</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                블렌드 모드
-              </label>
-              <select
-                value={params.blendMode}
-                onChange={(e) => onParamsChange({ ...params, blendMode: e.target.value as any })}
-                className="input-field"
-              >
-                <option value="normal">일반</option>
-                <option value="overlay">오버레이</option>
-                <option value="multiply">멀티플라이</option>
-                <option value="screen">스크린</option>
-                <option value="soft-light">소프트 라이트</option>
-                <option value="hard-light">하드 라이트</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                컬러 분포
-              </label>
-              <select
-                value={params.colorDistribution}
-                onChange={(e) => onParamsChange({ ...params, colorDistribution: e.target.value as any })}
-                className="input-field"
-              >
-                <option value="uniform">균등</option>
-                <option value="concentrated">집중</option>
-                <option value="diffused">확산</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">
-                테두리 스타일
-              </label>
-              <select
-                value={params.borderStyle}
-                onChange={(e) => onParamsChange({ ...params, borderStyle: e.target.value as any })}
-                className="input-field"
-              >
-                <option value="rounded">둥근 모서리</option>
-                <option value="sharp">각진 모서리</option>
-                <option value="none">테두리 없음</option>
-              </select>
+              <p className="text-xs text-gray-600 mt-2">
+                컬러들이 얼마나 넓게 퍼져서 배치될지 조절합니다. 높을수록 컬러가 더 넓게 분산됩니다.
+              </p>
             </div>
           </div>
         </div>
