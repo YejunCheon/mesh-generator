@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef} from 'react';
 import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../types';
-import DiscreteSlider from './DiscreteSlider';
 import * as htmlToImage from 'html-to-image';
+import { HiPhotograph,HiArchive } from 'react-icons/hi';
 
 // 헥스 컬러를 RGBA로 변환하는 헬퍼 함수 추가
 const hexToRgba = (hex: string, alpha: number): string => {
@@ -26,6 +26,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   onParamsChange,
   onBack
 }) => {
+
   const [showName, setShowName] = useState(true);
   const [showFlavor, setShowFlavor] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
@@ -138,9 +139,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Preview */}
         <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xl font-semibold text-black">미리보기</h4>
-          </div>
+          
           
           {/* PNG 다운로드용 카드 요소 (ref 추가) */}
           <div 
@@ -227,16 +226,13 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
             )}
           </div>
           
-          <div className="flex items-center space-x-4">
+          <div className="w-full flex justify-end items-center space-x-4">
             <button
               onClick={handleDownload}
               className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm"
               title="Download as PNG"
             >
-              {/* Image Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+              <HiPhotograph className="h-6 w-6" />
             </button>
 
             <button
@@ -244,73 +240,63 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
               className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm"
               title="Save to Supabase"
             >
-              {/* Save Icon */}
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14v4.382" />
-              </svg>
+              <HiArchive className="h-6 w-6" />
             </button>
           </div>
         </div>
 
         {/* Controls */}
         <div className="space-y-8">
-          <h4 className="text-xl font-semibold text-black">편집 옵션</h4>
-          
+            
           {/* Display Toggles */}
           <div className="space-y-6">
-            <h5 className="text-lg font-semibold text-black">표시 옵션</h5>
             
             <div className="space-y-4">
-              <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={backgroundOnly}
-                  onChange={(e) => setBackgroundOnly(e.target.checked)}
-                  className="mr-4 text-black focus:ring-black w-5 h-5"
-                />
-                <span className="font-medium">배경만 표시</span>
-              </label>
-              
-              <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={showName}
-                  onChange={(e) => setShowName(e.target.checked)}
-                  disabled={backgroundOnly}
-                  className="mr-4 text-black focus:ring-black w-5 h-5 disabled:opacity-50"
-                />
-                <span className="font-medium">원두 정보 표시</span>
-              </label>
-              
-              <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={showFlavor}
-                  onChange={(e) => setShowFlavor(e.target.checked)}
-                  disabled={backgroundOnly}
-                  className="mr-4 text-black focus:ring-black w-5 h-5 disabled:opacity-50"
-                />
-                <span className="font-medium">플레이버 노트 표시</span>
-              </label>
-              
-              <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={showIntensity}
-                  onChange={(e) => setShowIntensity(e.target.checked)}
-                  disabled={backgroundOnly}
-                  className="mr-4 text-black focus:ring-black w-5 h-5 disabled:opacity-50"
-                />
-                <span className="font-medium">강도 정보 표시</span>
-              </label>
+              {[
+                {
+                  label: '배경만 표시',
+                  checked: backgroundOnly,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setBackgroundOnly(e.target.checked),
+                  disabled: false,
+                },
+                {
+                  label: '원두 정보 표시',
+                  checked: showName,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowName(e.target.checked),
+                  disabled: backgroundOnly,
+                },
+                {
+                  label: '플레이버 노트 표시',
+                  checked: showFlavor,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowFlavor(e.target.checked),
+                  disabled: backgroundOnly,
+                },
+                {
+                  label: '강도 정보 표시',
+                  checked: showIntensity,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowIntensity(e.target.checked),
+                  disabled: backgroundOnly,
+                },
+              ].map((item, idx) => (
+                <label
+                  key={item.label}
+                  className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
+                >
+                  <input
+                    type="checkbox"
+                    checked={item.checked}
+                    onChange={item.onChange}
+                    disabled={item.disabled}
+                    className={`mr-4 text-black focus:ring-black w-5 h-5${item.disabled ? ' disabled:opacity-50' : ''}`}
+                  />
+                  <span className="font-medium">{item.label}</span>
+                </label>
+              ))}
             </div>
           </div>
 
           {/* Mesh Gradient Parameters */}
           <div className="space-y-6">
-            <h5 className="text-lg font-semibold text-black">메시 그라디언트 설정</h5>
             
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-3">
