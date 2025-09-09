@@ -8,13 +8,16 @@ const API_KEY = process.env.REACT_APP_GEMINI_API_KEY || '';
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 export const generateColorsWithGemini = async (coffeeBean: CoffeeBean): Promise<ColorRecommendation[]> => {
+  // 시작 로그
+  console.log('[Gemini] 컬러 추천 요청 시작');
   try {
     if (!API_KEY) {
+      console.error('[Gemini] API 키가 없습니다.');
       throw new Error('Gemini API 키가 설정되지 않았습니다.');
     }
 
     // Gemini 모델 가져오기
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     // 프롬프트 구성
     const prompt = `
@@ -48,16 +51,19 @@ export const generateColorsWithGemini = async (coffeeBean: CoffeeBean): Promise<
 JSON 형식으로만 응답해주세요.
 `;
 
+    // 어떤 프롬프트를 보냈는지 로그
+    console.log('[Gemini] 보낸 프롬프트:', prompt);
+
     // Gemini API 호출
     const result = await model.generateContent(prompt);
     const response = await result.response;
     const text = response.text();
-    console.log('Raw API response:', text);
-    
+    console.log('[Gemini] Raw API response:', text);
+
     // JSON 파싱 - 마크다운 코드 블록 제거
     try {
       let jsonText = text;
-      
+
       // ```json ... ``` 형태의 마크다운 코드 블록 제거
       if (text.includes('```json')) {
         const jsonStart = text.indexOf('```json') + 7;
@@ -66,7 +72,7 @@ JSON 형식으로만 응답해주세요.
           jsonText = text.substring(jsonStart, jsonEnd).trim();
         }
       }
-      
+
       // ``` ... ``` 형태의 일반 코드 블록 제거 (json 태그가 없는 경우)
       if (text.includes('```') && !text.includes('```json')) {
         const codeStart = text.indexOf('```') + 3;
@@ -75,24 +81,25 @@ JSON 형식으로만 응답해주세요.
           jsonText = text.substring(codeStart, codeEnd).trim();
         }
       }
-      
-      console.log('Extracted JSON text:', jsonText);
-      
+
+      console.log('[Gemini] Extracted JSON text:', jsonText);
+
       const colors = JSON.parse(jsonText);
+      console.log('[Gemini] 컬러 추천 완료:', colors);
       return colors.map((color: any) => ({
         hex: color.hex,
         name: color.name,
         description: color.description
       }));
     } catch (parseError) {
-      console.error('JSON 파싱 오류:', parseError);
-      console.error('파싱 시도한 텍스트:', text);
+      console.error('[Gemini] JSON 파싱 오류:', parseError);
+      console.error('[Gemini] 파싱 시도한 텍스트:', text);
       throw new Error('API 응답을 파싱할 수 없습니다.');
     }
 
-  } catch (error) {
-    console.error('Gemini API 오류:', error);
-    
+  } catch (error: any) {
+    console.error('[Gemini] 컬러 추천 실패:', error?.message || error);
+
     // 에러 발생 시 기본 컬러 반환
     return [
       {
