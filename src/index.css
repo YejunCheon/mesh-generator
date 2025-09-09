@@ -37,3 +37,17 @@
     @apply border-gray-300 bg-white text-gray-400;
   }
 }
+
+/* Custom Font Definition */
+@font-face {
+  font-family: 'Ranade-Light';
+  src: url('./assets/font/Ranade-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@layer utilities {
+  .font-ranade {
+    font-family: 'Ranade-Light', sans-serif;
+  }
+}
