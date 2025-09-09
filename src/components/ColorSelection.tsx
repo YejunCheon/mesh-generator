@@ -20,7 +20,10 @@ const ColorSelection: React.FC<ColorSelectionProps> = ({ colors, onConfirm, onBa
 
   const handleConfirm = () => {
     if (selectedColors.length > 0) {
-      const selectedColorObjects = colors.filter(color => selectedColors.includes(color.hex));
+      // 선택된 순서대로 컬러 객체들을 가져오기
+      const selectedColorObjects = selectedColors.map(hex => 
+        colors.find(color => color.hex === hex)
+      ).filter(Boolean) as ColorRec[];
       onConfirm(selectedColorObjects);
     }
   };

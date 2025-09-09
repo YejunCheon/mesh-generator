@@ -50,7 +50,7 @@ const DiscreteSlider: React.FC<DiscreteSliderProps> = ({
             // 1. 클릭 핸들러와 접근성 속성을 부모 div로 이동
             <div
               key={option.value}
-              className="relative z-10 flex justify-center cursor-pointer"
+              className="relative z-10 flex h-5 w-5 items-center justify-center cursor-pointer"
               onClick={() => onChange(option.value)}
               onKeyDown={(e) => handleKeyDown(e, option.value)}
               role="button"

@@ -145,7 +145,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
           {/* PNG 다운로드용 카드 요소 (ref 추가) */}
           <div 
             ref={cardRef}
-            className="w-full h-80 relative"
+            className="w-full h-96 relative"
             style={{
               background: gradientStyles.background,
               backgroundImage: gradientStyles.backgroundImage,
@@ -156,7 +156,14 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
               <>
                 {/* 원두 정보 (좌측 정렬, 작은 사이즈) */}
                 {showName && (
-                  <div className="absolute top-6 left-6 text-left">
+                  <div 
+                    className="absolute top-6 left-6 text-left"
+                    style={{ 
+                      maxWidth: 'calc(100% - 2rem)', // 우측 패딩 영역 확보 (w-48 ≈ 12rem) + 여유 공간
+                      wordBreak: 'keep-all', // 한국어 단어 단위 줄바꿈
+                      overflowWrap: 'break-word' // 긴 단어 강제 줄바꿈
+                    }}
+                  >
                     <h3 className="text-white text-2xl font-bold drop-shadow-md leading-tight">
                       {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.farm, coffeeBean.beanName].filter(Boolean).join(' ')}
                     </h3>
