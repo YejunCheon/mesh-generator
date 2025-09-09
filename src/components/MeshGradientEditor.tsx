@@ -145,7 +145,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
           {/* PNG 다운로드용 카드 요소 (ref 추가) */}
           <div 
             ref={cardRef}
-            className="w-full h-96 relative"
+            className="w-full h-96 relative font-ranade"
             style={{
               background: gradientStyles.background,
               backgroundImage: gradientStyles.backgroundImage,
@@ -227,18 +227,29 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
             )}
           </div>
           
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
             <button
               onClick={handleDownload}
-              className="btn-primary flex-1"
+              className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm"
+              title="Download as PNG"
             >
-              PNG 이미지 다운로드
+              {/* Image Icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
             </button>
+
             <button
               onClick={handleSaveToSupabase}
-              className="btn-secondary flex-1"
+              className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm"
+              title="Save to Supabase"
             >
-              Supabase 저장
+              {/* Save Icon */}
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 14v4.382" />
+              </svg>
             </button>
           </div>
         </div>
