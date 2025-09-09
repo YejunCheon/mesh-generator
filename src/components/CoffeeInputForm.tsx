@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { CoffeeBean, RoastLevel } from '../types';
+import { CoffeeBean } from '../types';
 
 interface CoffeeInputFormProps {
   onSubmit: (coffeeBean: CoffeeBean) => void;
@@ -9,7 +9,7 @@ interface CoffeeInputFormProps {
 const CoffeeInputForm: React.FC<CoffeeInputFormProps> = ({ onSubmit }) => {
   const [currentStep, setCurrentStep] = useState<'origin' | 'bean-name'>('origin');
   const [showRegionFields, setShowRegionFields] = useState(false);
-  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm<CoffeeBean>({
+  const { register, handleSubmit, formState: { errors }, watch } = useForm<CoffeeBean>({
     defaultValues: {
       origin: {
         country: '',
@@ -18,7 +18,7 @@ const CoffeeInputForm: React.FC<CoffeeInputFormProps> = ({ onSubmit }) => {
       },
       beanName: '',
       roastLevel: undefined,
-      flavorNotes: ['', '', '', '', ''],
+      flavorNotes: [],
       intensity: {
         acidity: 5,
         sweetness: 5,
@@ -27,8 +27,17 @@ const CoffeeInputForm: React.FC<CoffeeInputFormProps> = ({ onSubmit }) => {
     }
   });
 
+  const regionRef = useRef<HTMLInputElement>(null);
+  const farmRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (showRegionFields && regionRef.current) {
+      // Use a timeout to ensure the field is focusable after the render.
+      setTimeout(() => regionRef.current?.focus(), 0);
+    }
+  }, [showRegionFields]);
+
   const handleFormSubmit = (data: CoffeeBean) => {
-    // 데이터 검증 및 정리
     const cleanedData = {
       ...data,
       flavorNotes: data.flavorNotes.filter(note => note.trim() !== ''),
@@ -92,9 +101,6 @@ const CoffeeInputForm: React.FC<CoffeeInputFormProps> = ({ onSubmit }) => {
 
   const getNextButtonText = () => {
     if (currentStep === 'origin') {
-      if (!showRegionFields) {
-        return '다음';
-      }
       return '다음';
     }
     return '완료';
@@ -102,7 +108,7 @@ const CoffeeInputForm: React.FC<CoffeeInputFormProps> = ({ onSubmit }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-      <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
         <h3 className="text-3xl font-bold text-black mb-8">{getStepTitle()}</h3>
         
         {currentStep === 'origin' && (
@@ -117,9 +123,15 @@ const CoffeeInputForm: React.FC<CoffeeInputFormProps> = ({ onSubmit }) => {
                 className="input-field"
                 placeholder="예: 에티오피아, 브라질, 콜롬비아..."
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && watch('origin.country').trim()) {
+                  if (e.key === 'Enter') {
                     e.preventDefault();
-                    nextStep();
+                    if (watch('origin.country').trim()) {
+                      if (showRegionFields) {
+                        regionRef.current?.focus();
+                      } else {
+                        setShowRegionFields(true);
+                      }
+                    }
                   }
                 }}
               />
@@ -137,12 +149,13 @@ const CoffeeInputForm: React.FC<CoffeeInputFormProps> = ({ onSubmit }) => {
                   <input
                     type="text"
                     {...register('origin.region')}
+                    ref={regionRef}
                     className="input-field"
                     placeholder="예: 예가체프, 산타로사..."
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
-                        nextStep();
+                        farmRef.current?.focus();
                       }
                     }}
                   />
@@ -155,6 +168,7 @@ const CoffeeInputForm: React.FC<CoffeeInputFormProps> = ({ onSubmit }) => {
                   <input
                     type="text"
                     {...register('origin.farm')}
+                    ref={farmRef}
                     className="input-field"
                     placeholder="예: 코나, 블루마운틴..."
                     onKeyDown={(e) => {
