@@ -46,8 +46,19 @@
   font-style: normal;
 }
 
+@font-face {
+  font-family: 'Hahmlet-Light';
+  src: url('./assets/font/Hahmlet-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+
 @layer utilities {
   .font-ranade {
     font-family: 'Ranade-Light', sans-serif;
+  }
+  .font-hahmlet {
+    font-family: 'font-hahmlet', sans-serif;
   }
 }
