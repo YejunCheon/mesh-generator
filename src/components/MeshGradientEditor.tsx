@@ -19,16 +19,17 @@ interface HighResolutionCardProps {
   showFlavor: boolean;
   showIntensity: boolean;
   backgroundOnly: boolean;
+  fontClass: string;
 }
 
 const HighResolutionCard = forwardRef<HTMLDivElement, HighResolutionCardProps>((
-  { coffeeBean, gradientStyles, showName, showFlavor, showIntensity, backgroundOnly },
+  { coffeeBean, gradientStyles, showName, showFlavor, showIntensity, backgroundOnly, fontClass },
   ref
 ) => {
   return (
     <div
       ref={ref}
-      className="font-ranade"
+      className={fontClass}
       style={{
         ...gradientStyles,
         width: '1200px',
@@ -92,6 +93,13 @@ interface MeshGradientEditorProps {
   onBack: () => void;
 }
 
+const availableFonts = [
+  { name: 'Ranade', className: 'font-ranade' },
+  { name: 'Hahmlet', className: 'font-hahmlet' },
+  { name: 'NanumSquare Neo', className: 'font-nanumsquareneo' },
+  { name: 'HS Santokki', className: 'font-hssantokki' },
+];
+
 const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   coffeeBean,
   colors,
@@ -103,6 +111,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   const [showFlavor, setShowFlavor] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
   const [backgroundOnly, setBackgroundOnly] = useState(false);
+  const [selectedFont, setSelectedFont] = useState('font-ranade');
   
   const previewCardRef = useRef<HTMLDivElement>(null);
   const hiresCardRef = useRef<HTMLDivElement>(null);
@@ -162,6 +171,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
           showFlavor={showFlavor}
           showIntensity={showIntensity}
           backgroundOnly={backgroundOnly}
+          fontClass={selectedFont}
         />
       </div>
 
@@ -175,21 +185,21 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
           <div className="w-full relative" style={{ paddingTop: '100%' }}>
             <div
               ref={previewCardRef}
-              className="absolute top-0 left-0 w-full h-full font-ranade"
+              className={`absolute top-0 left-0 w-full h-full ${selectedFont}`}
               style={{ ...gradientStyles, borderRadius: '16px' }}
             >
               {!backgroundOnly && (
                 <>
                   {showName && (
                     <div className="absolute top-6 left-6 text-left" style={{ maxWidth: 'calc(100% - 2rem)', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-                      <h3 className="text-white text-2xl font-bold drop-shadow-md leading-tight">
+                      <h3 className="text-white text-2xl font-bold leading-tight">
                       {coffeeBean.displayName}
                     </h3>
                     </div>
                   )}
                   {showFlavor && coffeeBean.flavorNotes.length > 0 && (
                     <div className="absolute bottom-6 left-6 text-left" >
-                      <p className="text-white text-md drop-shadow-md whitespace-normal break-words">
+                      <p className="text-white text-md whitespace-normal break-words">
                         {coffeeBean.flavorNotes.slice(0, 5).map((note, idx) => (
                           <span key={idx} className="block"># {note}</span>
                         ))}
@@ -199,19 +209,19 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                   {showIntensity && (
                     <div className="absolute right-6 bottom-6">
                       <div className="mt-4">
-                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Acidity</span>
+                        <span className="text-white text-sm font-medium block mb-2">Acidity</span>
                         <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
                           <div className="h-full bg-white rounded-full" style={{ width: `${(coffeeBean.intensity.acidity / 10) * 100}%` }} />
                         </div>
                       </div>
                       <div className="mt-4">
-                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Sweetness</span>
+                        <span className="text-white text-sm font-medium block mb-2">Sweetness</span>
                         <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
                           <div className="h-full bg-white rounded-full" style={{ width: `${(coffeeBean.intensity.sweetness / 10) * 100}%` }} />
                         </div>
                       </div>
                       <div className="mt-4">
-                        <span className="text-white text-sm font-medium drop-shadow-md block mb-2">Body</span>
+                        <span className="text-white text-sm font-medium block mb-2">Body</span>
                         <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
                           <div className="h-full bg-white rounded-full" style={{ width: `${(coffeeBean.intensity.body / 10) * 100}%` }} />
                         </div>
@@ -265,6 +275,25 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                   <input type="checkbox" checked={item.checked} onChange={item.onChange} disabled={item.disabled} className={`mr-4 text-black focus:ring-black w-5 h-5${item.disabled ? ' disabled:opacity-50' : ''}`} />
                   <span className="font-medium">{item.label}</span>
                 </label>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">폰트 선택</label>
+            <div className="grid grid-cols-2 gap-4">
+              {availableFonts.map((font) => (
+                <button
+                  key={font.className}
+                  type="button"
+                  onClick={() => setSelectedFont(font.className)}
+                  className={`p-4 border rounded-lg text-center transition-all duration-200 ${
+                    selectedFont === font.className
+                      ? 'border-black ring-2 ring-black'
+                      : 'border-gray-200 hover:border-gray-400'
+                  }`}
+                >
+                  <span className={`${font.className} text-xl`}>에티오피아</span>
+                </button>
               ))}
             </div>
           </div>

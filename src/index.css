@@ -38,27 +38,60 @@
   }
 }
 
-/* Custom Font Definition */
+/* Custom Font Definitions */
 @font-face {
-  font-family: 'Ranade-Light';
+  font-family: 'Hahmlet';
+  src: url('./assets/font/Hahmlet-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Hahmlet';
+  src: url('./assets/font/Hahmlet-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'HSSanTokki';
+  src: url('./assets/font/HSSanTokki2.0(2024).ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'NanumSquareNeo';
+  src: url('./assets/font/NanumSquareNeo-cBd.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Ranade';
   src: url('./assets/font/Ranade-Light.ttf') format('truetype');
   font-weight: 300;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'Hahmlet-Light';
-  src: url('./assets/font/Hahmlet-Light.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
+  font-family: 'Ranade';
+  src: url('./assets/font/Ranade-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
 }
 
-
 @layer utilities {
-  .font-ranade {
-    font-family: 'Ranade-Light', sans-serif;
-  }
   .font-hahmlet {
-    font-family: 'font-hahmlet', sans-serif;
+    font-family: 'Hahmlet', sans-serif;
+  }
+  .font-hssantokki {
+    font-family: 'HSSanTokki', sans-serif;
+  }
+  .font-nanumsquareneo {
+    font-family: 'NanumSquareNeo', sans-serif;
+  }
+  .font-ranade {
+    font-family: 'Ranade', sans-serif;
   }
 }
