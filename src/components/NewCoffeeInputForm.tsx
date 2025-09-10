@@ -1,23 +1,40 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { CoffeeBean } from '../types';
+import { useForm, useFieldArray } from 'react-hook-form';
+import { CoffeeBean, SingleOriginDetails, BlendDetails, RoastLevel } from '../types';
 
 interface NewCoffeeInputFormProps {
   onSubmit: (data: CoffeeBean) => void;
 }
 
+// A simple, flat shape for the form state
+interface CoffeeFormShape {
+  originType: 'single' | 'blending';
+  beanName: string;
+  roastLevel?: RoastLevel;
+  flavorNotes: string[];
+  intensity: { acidity: number; sweetness: number; body: number; };
+  origin: SingleOriginDetails;
+  blend: BlendDetails;
+}
+
 const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => {
   const [originType, setOriginType] = useState<'single' | 'blending'>('single');
-  const { register, handleSubmit, formState: { errors } } = useForm<CoffeeBean>({
+  
+  const { register, handleSubmit, control, watch } = useForm<CoffeeFormShape>({
     defaultValues: {
+      originType: 'single',
       origin: {
         country: '',
         region: '',
+        farm: '',
         altitude: '',
         variety: '',
         processing: '',
       },
       beanName: '',
+      blend: {
+        components: [{ country: '', ratio: 100 }]
+      },
       roastLevel: undefined,
       flavorNotes: [],
       intensity: {
@@ -28,10 +45,37 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
     }
   });
 
-  const handleFormSubmit = (data: CoffeeBean) => {
-    // Here you can process data based on originType
-    console.log('Submitting New Form Data:', { ...data, originType });
-    onSubmit({ ...data, originType: originType });
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "blend.components"
+  });
+
+  const watchBlendComponents = watch("blend.components");
+  const totalRatio = watchBlendComponents?.reduce((acc, curr) => acc + (Number(curr.ratio) || 0), 0) || 0;
+
+  const handleFormSubmit = (data: CoffeeFormShape) => {
+    let finalData: CoffeeBean;
+
+    if (originType === 'single') {
+      const { country, region, variety, processing } = data.origin;
+      const displayName = [country, region, variety, processing].filter(Boolean).join(' / ');
+      
+      finalData = {
+        ...data,
+        originType: 'single',
+        displayName: displayName || data.beanName,
+        origin: data.origin, // Ensure origin is passed
+      };
+    } else { // blending
+      finalData = {
+        ...data,
+        originType: 'blending',
+        displayName: data.beanName,
+        blend: data.blend, // Ensure blend is passed
+      };
+    }
+    
+    onSubmit(finalData);
   };
 
   const ToggleButton = ({ label, type }: { label: string, type: 'single' | 'blending' }) => (
@@ -51,61 +95,86 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 max-w-2xl mx-auto">
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
+        <h3 className="text-3xl font-bold text-black mb-4 text-center">새로운 커피 정보 입력</h3>
 
-        <div className="flex justify-center space-x-4 p-1 rounded-full">
+        <div className="flex justify-center space-x-4 p-1 bg-gray-100 rounded-full">
           <ToggleButton label="싱글 오리진" type="single" />
           <ToggleButton label="블렌드" type="blending" />
         </div>
 
         {originType === 'single' && (
           <div className="space-y-6 animate-fade-in">
-            
+            <h4 className="text-xl font-semibold text-gray-800 border-b pb-3">싱글 오리진 정보</h4>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">원두명 *</label>
+              <input {...register('beanName', { required: originType === 'single' })} className="input-field" placeholder="예: 에티오피아 코케 허니" />
+            </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">산지 (국가) *</label>
-              <input {...register('origin.country', { required: '국가명은 필수입니다.' })} className="input-field" placeholder="예: 에티오피아" />
-              {errors.origin?.country && <p className="text-red-500 text-sm mt-1">{errors.origin.country.message}</p>}
+              <input {...register('origin.country', { required: originType === 'single' })} className="input-field" placeholder="예: 에티오피아" />
             </div>
-
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">지역 / 농장명 <span className="text-gray-400 font-normal">(선택)</span></label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">지역 <span className="text-gray-400 font-normal">(선택)</span></label>
               <input {...register('origin.region')} className="input-field" placeholder="예: 예가체프, 안티구아" />
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">고도 (m) <span className="text-gray-400 font-normal">(선택)</span></label>
-              <input {...register('origin.altitude')} type="number" className="input-field" placeholder="예: 1800" />
-            </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">품종 <span className="text-gray-400 font-normal">(선택)</span></label>
               <input {...register('origin.variety')} className="input-field" placeholder="예: 게이샤, 버번" />
             </div>
-
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">프로세싱 <span className="text-gray-400 font-normal">(선택)</span></label>
               <input {...register('origin.processing')} className="input-field" placeholder="예: 워시드, 내추럴" />
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">원두명</label>
-              <input {...register('beanName')} className="input-field" placeholder="예: 코케 허니" />
-              {errors.beanName && <p className="text-red-500 text-sm mt-1">{errors.beanName.message}</p>}
+             <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">고도 (m) <span className="text-gray-400 font-normal">(선택)</span></label>
+              <input {...register('origin.altitude')} type="number" className="input-field" placeholder="예: 1800" />
             </div>
-
           </div>
         )}
 
         {originType === 'blending' && (
           <div className="space-y-6 animate-fade-in">
-            <div className="text-center p-8 bg-gray-50 rounded-lg">
-              <h5 className="text-lg font-medium text-gray-500">블렌드 원두 정보 입력 기능은</h5>
-              <p className="text-2xl font-bold text-gray-800 mt-2">향후 개발 예정입니다 🚀</p>
+            <h4 className="text-xl font-semibold text-gray-800 border-b pb-3">블렌드 정보</h4>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">블렌드 이름 *</label>
+              <input {...register('beanName', { required: originType === 'blending' })} className="input-field" placeholder="예: 하우스 블렌드" />
+            </div>
+            <div className="space-y-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">블렌드 구성 *</label>
+              {fields.map((item, index) => (
+                <div key={item.id} className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                  <input
+                    {...register(`blend.components.${index}.country`)}
+                    placeholder="산지 (국가)"
+                    className="input-field w-2/3"
+                  />
+                  <input
+                    {...register(`blend.components.${index}.ratio`, { valueAsNumber: true })}
+                    type="number"
+                    placeholder="비율(%)"
+                    className="input-field w-1/3"
+                  />
+                  <button type="button" onClick={() => remove(index)} className="text-red-500 hover:text-red-700 p-2 font-bold text-lg">-</button>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between items-center">
+              <button
+                type="button"
+                onClick={() => append({ country: '', ratio: 0 })}
+                className="text-sm font-medium text-black hover:underline"
+              >
+                + 산지 추가
+              </button>
+              <div className={`text-sm font-semibold ${totalRatio !== 100 ? 'text-red-500' : 'text-green-600'}`}>
+                총 비율: {totalRatio}%
+              </div>
             </div>
           </div>
         )}
 
         <div className="pt-6 border-t">
-          <button type="submit" className="w-full btn-primary py-4 text-base">다음</button>
+          <button type="submit" className="w-full btn-primary py-4 text-base">다음 단계로</button>
         </div>
       </form>
     </div>

@@ -20,13 +20,17 @@ export const generateColorsWithGemini = async (coffeeBean: CoffeeBean): Promise<
     const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     // 프롬프트 구성
+    const originInfo = coffeeBean.originType === 'single'
+      ? `- 원산지: ${coffeeBean.origin.country}${coffeeBean.origin.region ? `, ${coffeeBean.origin.region}` : ''}`
+      : `- 블렌드 구성: ${coffeeBean.blend.components.map(c => `${c.country} ${c.ratio}%`).join(', ')}`;
+
     const prompt = `
-당신은 커피 전문가이자 컬러 디자이너입니다. 
+당신은 커피 전문가이자 컬러 디자이너입니다.
 다음 커피 원두의 특성을 분석하여 5개의 컬러를 추천해주세요. 다채로운 컬러를 추천해주셔야합니다. 꼭 커피라고 해서 brown 계열을 추천할 필요없어요.
 5개의 컬러는 너무 비슷하면 안되고 조화를 이루어야합니다.
 
 커피 정보:
-- 원산지: ${coffeeBean.origin.country}${coffeeBean.origin.region ? `, ${coffeeBean.origin.region}` : ''}${coffeeBean.origin ? `, ${coffeeBean.origin}` : ''}
+${originInfo}
 - 원두명: ${coffeeBean.beanName}
 - 배전도: ${coffeeBean.roastLevel}
 - 플레이버 노트: ${coffeeBean.flavorNotes.join(', ')}

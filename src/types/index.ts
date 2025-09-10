@@ -1,14 +1,27 @@
-export interface CoffeeBean {
-  originType: 'single' | 'blending';
-  origin: {
-    country: string;
-    region?: string;
-    altitude?: string;
-    variety?: string;
-    processing?: string;
-  };
+export type RoastLevel = 'light' | 'medium' | 'dark' | 'espresso';
+
+export interface SingleOriginDetails {
+  country: string;
+  region?: string;
+  farm?: string;
+  altitude?: string;
+  variety?: string;
+  processing?: string;
+}
+
+export interface BlendComponent {
+  country: string;
+  ratio: number;
+}
+
+export interface BlendDetails {
+  components: BlendComponent[];
+}
+
+interface CoffeeBeanBase {
+  displayName: string;
   beanName: string;
-  roastLevel: RoastLevel;
+  roastLevel?: RoastLevel;
   flavorNotes: string[];
   intensity: {
     acidity: number; // 1-10
@@ -17,7 +30,17 @@ export interface CoffeeBean {
   };
 }
 
-export type RoastLevel = 'light' | 'medium' | 'dark' | 'espresso';
+export interface SingleOriginCoffee extends CoffeeBeanBase {
+  originType: 'single';
+  origin: SingleOriginDetails;
+}
+
+export interface BlendedCoffee extends CoffeeBeanBase {
+  originType: 'blending';
+  blend: BlendDetails;
+}
+
+export type CoffeeBean = SingleOriginCoffee | BlendedCoffee;
 
 export interface ColorRecommendation {
   hex: string;
@@ -46,23 +69,6 @@ export interface GeneratedCard {
   createdAt: Date;
 }
 
-// Flavor Wheel Types
-export interface FlavorCategory {
-  name: string;
-  color?: string;
-  children: FlavorSubCategory[];
-}
-
-export interface FlavorSubCategory {
-  name: string;
-  children: FlavorNote[];
-}
-
-export interface FlavorNote {
-  name: string;
-}
-
-// Alternative approach: More flexible structure
 export interface FlavorNode {
   name: string;
   children?: FlavorNode[];

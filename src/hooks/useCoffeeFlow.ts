@@ -109,7 +109,7 @@ export const useCoffeeFlow = () => {
     if (flowState.coffeeBean) {
       setFlowState(prev => ({
         ...prev,
-        coffeeBean: { ...prev.coffeeBean!, ...updates }
+        coffeeBean: { ...prev.coffeeBean!, ...updates } as CoffeeBean
       }));
     }
   }, [flowState.coffeeBean]);

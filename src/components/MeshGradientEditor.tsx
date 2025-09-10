@@ -43,7 +43,7 @@ const HighResolutionCard = forwardRef<HTMLDivElement, HighResolutionCardProps>((
           {showName && (
             <div style={{ position: 'absolute', top: '72px', left: '72px', textAlign: 'left', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
               <h3 style={{ color: 'white', fontSize: '80px', fontWeight: 'bold', lineHeight: '1.2' }}>
-                {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.processing, coffeeBean.beanName].filter(Boolean).join(' ')}
+                {coffeeBean.displayName}
               </h3>
             </div>
           )}
@@ -183,8 +183,8 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                   {showName && (
                     <div className="absolute top-6 left-6 text-left" style={{ maxWidth: 'calc(100% - 2rem)', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
                       <h3 className="text-white text-2xl font-bold drop-shadow-md leading-tight">
-                        {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.processing, coffeeBean.beanName].filter(Boolean).join(' ')}
-                      </h3>
+                      {coffeeBean.displayName}
+                    </h3>
                     </div>
                   )}
                   {showFlavor && coffeeBean.flavorNotes.length > 0 && (

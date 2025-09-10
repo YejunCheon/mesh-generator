@@ -23,56 +23,78 @@ const CoffeeSummary: React.FC<CoffeeSummaryProps> = ({ coffeeBean, onConfirm, on
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
       <h3 className="text-3xl font-bold text-black mb-8">입력한 커피 정보를 확인해주세요</h3>
       
-      {/* 커피 정보 요약 */}
       <div className="bg-gray-50 rounded-lg p-6 mb-8">
         <h4 className="text-lg font-semibold text-black mb-4">커피 정보</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="font-medium text-gray-700">산지:</span> 
-            <span className="ml-2 text-gray-900">
-              {coffeeBean.origin.country}
-              {coffeeBean.origin.region && ` ${coffeeBean.origin.region}`}
-            </span>
+            <span className="font-medium text-gray-700">이름:</span> 
+            <span className="ml-2 text-gray-900 font-semibold">{coffeeBean.displayName}</span>
           </div>
           <div>
-            <span className="font-medium text-gray-700">원두명:</span> 
-            {coffeeBean.beanName && (
-              <span className="ml-2 text-gray-900">{coffeeBean.beanName}</span>
-            )}
+            <span className="font-medium text-gray-700">종류:</span> 
+            <span className="ml-2 text-gray-900">{coffeeBean.originType === 'single' ? '싱글 오리진' : '블렌드'}</span>
           </div>
+
+          {/* Single Origin Details */}
+          {coffeeBean.originType === 'single' && (
+            <>
+              {coffeeBean.origin.region && (
+                 <div>
+                  <span className="font-medium text-gray-700">지역:</span> 
+                  <span className="ml-2 text-gray-900">{coffeeBean.origin.region}</span>
+                </div>
+              )}
+              {coffeeBean.origin.farm && (
+                 <div>
+                  <span className="font-medium text-gray-700">농장:</span> 
+                  <span className="ml-2 text-gray-900">{coffeeBean.origin.farm}</span>
+                </div>
+              )}
+              {coffeeBean.origin.variety && (
+                <div>
+                  <span className="font-medium text-gray-700">품종:</span> 
+                  <span className="ml-2 text-gray-900">{coffeeBean.origin.variety}</span>
+                </div>
+              )}
+              {coffeeBean.origin.processing && (
+                <div>
+                  <span className="font-medium text-gray-700">프로세싱:</span> 
+                  <span className="ml-2 text-gray-900">{coffeeBean.origin.processing}</span>
+                </div>
+              )}
+              {coffeeBean.origin.altitude && (
+                <div>
+                  <span className="font-medium text-gray-700">고도:</span> 
+                  <span className="ml-2 text-gray-900">{coffeeBean.origin.altitude}m</span>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Blending Details */}
+          {coffeeBean.originType === 'blending' && (
+            <div className="md:col-span-2">
+              <span className="font-medium text-gray-700">블렌드 구성:</span>
+              <ul className="list-disc list-inside ml-2 mt-1">
+                {coffeeBean.blend.components.map((c, i) => (
+                  <li key={i} className="text-gray-900">{c.country}: {c.ratio}%</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div>
             <span className="font-medium text-gray-700">배전도:</span> 
             <span className="ml-2 text-gray-900">
-              {coffeeBean.roastLevel === 'light' ? '라이트' : 
-               coffeeBean.roastLevel === 'medium' ? '미디엄' : 
-               coffeeBean.roastLevel === 'dark' ? '다크' : '에스프레소'}
+              {coffeeBean.roastLevel ? coffeeBean.roastLevel.charAt(0).toUpperCase() + coffeeBean.roastLevel.slice(1) : 'N/A'}
             </span>
           </div>
           <div>
             <span className="font-medium text-gray-700">플레이버:</span> 
             <span className="ml-2 text-gray-900">{coffeeBean.flavorNotes?.join(', ') || 'N/A'}</span>
           </div>
-          {coffeeBean.origin.variety && (
-            <div>
-              <span className="font-medium text-gray-700">품종:</span> 
-              <span className="ml-2 text-gray-900">{coffeeBean.origin.variety}</span>
-            </div>
-          )}
-          {coffeeBean.origin.processing && (
-            <div>
-              <span className="font-medium text-gray-700">프로세싱:</span> 
-              <span className="ml-2 text-gray-900">{coffeeBean.origin.processing}</span>
-            </div>
-          )}
-          {coffeeBean.origin.altitude && (
-            <div>
-              <span className="font-medium text-gray-700">고도:</span> 
-              <span className="ml-2 text-gray-900">{coffeeBean.origin.altitude}m</span>
-            </div>
-          )}
         </div>
         
-        {/* 강도 정보 */}
         {coffeeBean.intensity && (
           <div className="mt-6">
             <h5 className="font-medium text-gray-700 mb-3">강도 지표</h5>
@@ -94,15 +116,8 @@ const CoffeeSummary: React.FC<CoffeeSummaryProps> = ({ coffeeBean, onConfirm, on
         )}
       </div>
 
-      {/* 네비게이션 버튼 */}
       <div className="flex justify-between pt-6 border-t border-gray-200">
-        <button
-          onClick={onBack}
-          className="btn-secondary"
-          disabled={isLoading}
-        >
-          이전
-        </button>
+        <button onClick={onBack} className="btn-secondary" disabled={isLoading}>이전</button>
         <button
           onClick={handleConfirm}
           disabled={isLoading}
