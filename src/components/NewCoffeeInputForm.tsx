@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { CoffeeBean, SingleOriginDetails, BlendDetails, RoastLevel } from '../types';
+import { HiPencil } from 'react-icons/hi';
 
 interface NewCoffeeInputFormProps {
   onSubmit: (data: CoffeeBean) => void;
@@ -9,7 +10,7 @@ interface NewCoffeeInputFormProps {
 // A simple, flat shape for the form state
 interface CoffeeFormShape {
   originType: 'single' | 'blending';
-  beanName: string;
+  displayName: string;
   roastLevel?: RoastLevel;
   flavorNotes: string[];
   intensity: { acidity: number; sweetness: number; body: number; };
@@ -19,8 +20,9 @@ interface CoffeeFormShape {
 
 const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => {
   const [originType, setOriginType] = useState<'single' | 'blending'>('single');
+  const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
   
-  const { register, handleSubmit, control, watch } = useForm<CoffeeFormShape>({
+  const { register, handleSubmit, control, watch, setValue } = useForm<CoffeeFormShape>({
     defaultValues: {
       originType: 'single',
       origin: {
@@ -31,7 +33,7 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
         variety: '',
         processing: '',
       },
-      beanName: '',
+      displayName: '',
       blend: {
         components: [{ country: '', ratio: 100 }]
       },
@@ -65,40 +67,47 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
     watchOriginProcessing
   ].filter(Boolean).join(' ');
 
+  useEffect(() => {
+    if (!isEditingDisplayName && originType === 'single') {
+      setValue('displayName', singleOriginDisplayName);
+    }
+  }, [singleOriginDisplayName, isEditingDisplayName, originType, setValue]);
+
   const handleFormSubmit = (data: CoffeeFormShape) => {
     let finalData: CoffeeBean;
 
     if (originType === 'single') {
-      const { country, region, variety, processing } = data.origin;
-      const displayName = [country, region, variety, processing].filter(Boolean).join(' ');
-      
       finalData = {
         ...data,
         originType: 'single',
-        beanName: displayName, // Set beanName to the constructed display name
-        displayName: displayName,
-        origin: data.origin, // Ensure origin is passed
+        beanName: data.displayName,
+        displayName: data.displayName,
+        origin: data.origin,
       };
     } else { // blending
       finalData = {
         ...data,
         originType: 'blending',
-        displayName: data.beanName,
-        blend: data.blend, // Ensure blend is passed
+        beanName: data.displayName,
+        displayName: data.displayName,
+        blend: data.blend,
       };
     }
     
     onSubmit(finalData);
   };
 
-  const ToggleButton = ({ label, type }: { label: string, type: 'single' | 'blending' }) => (
+  const TabButton = ({ label, type }: { label: string, type: 'single' | 'blending' }) => (
     <button
       type="button"
-      onClick={() => setOriginType(type)}
-      className={`px-6 py-2 text-sm font-semibold rounded-full transition-colors duration-200 ${
+      onClick={() => {
+        setOriginType(type);
+        setIsEditingDisplayName(false);
+      }}
+      className={`w-1/2 py-3 text-center text-base font-medium transition-colors duration-200 focus:outline-none -mb-px ${
         originType === type
-          ? 'bg-black text-white'
-          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+          ? 'text-black border-b-2 border-black'
+          : 'text-gray-400 hover:text-gray-600 border-b-2 border-transparent'
       }`}
     >
       {label}
@@ -108,20 +117,13 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 mx-auto">
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-
-        <div className="flex justify-center space-x-4 p-1 rounded-full">
-          <ToggleButton label="싱글 오리진" type="single" />
-          <ToggleButton label="블렌드" type="blending" />
+        <div className="flex border-b border-gray-200">
+          <TabButton label="싱글 오리진" type="single" />
+          <TabButton label="블렌드" type="blending" />
         </div>
 
         {originType === 'single' && (
           <div className="space-y-6 animate-fade-in">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">미리보기 (원두명)</label>
-              <p className="input-field bg-gray-100 text-gray-600">
-                {singleOriginDisplayName}
-              </p>
-            </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">산지 (국가) *</label>
               <input {...register('origin.country', { required: originType === 'single' })} className="input-field" placeholder="예: 에티오피아" />
@@ -142,6 +144,28 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
               <label className="block text-sm font-semibold text-gray-700 mb-2">고도 (m) <span className="text-gray-400 font-normal">(선택)</span></label>
               <input {...register('origin.altitude')} type="number" className="input-field" placeholder="예: 1800" />
             </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">원두명</label>
+              <div className="relative flex items-center">
+                <input
+                  {...register('displayName', { required: originType === 'single' })}
+                  className="input-field w-full pr-10"
+                  readOnly={!isEditingDisplayName}
+                  onFocus={() => setIsEditingDisplayName(true)}
+                  placeholder="예: 에티오피아 예가체프 게이샤 워시드"
+                />
+                {!isEditingDisplayName && (
+                  <div
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer"
+                    onClick={() => setIsEditingDisplayName(true)}
+                  >
+                    <HiPencil />
+                    <span className="ml-1 text-s text-gray-500">직접 작성하기</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
           </div>
         )}
 
@@ -149,7 +173,7 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
           <div className="space-y-6 animate-fade-in">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">블렌드 이름 *</label>
-              <input {...register('beanName', { required: originType === 'blending' })} className="input-field" placeholder="예: 하우스 블렌드" />
+              <input {...register('displayName', { required: originType === 'blending' })} className="input-field" placeholder="예: 하우스 블렌드" />
             </div>
             <div className="space-y-4">
               <label className="block text-sm font-semibold text-gray-700 mb-2">블렌드 구성 *</label>
