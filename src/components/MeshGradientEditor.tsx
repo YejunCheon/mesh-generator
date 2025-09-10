@@ -19,19 +19,19 @@ interface HighResolutionCardProps {
   showName: boolean;
   showFlavor: boolean;
   showIntensity: boolean;
+  showBlend: boolean;
   backgroundOnly: boolean;
   fontClass: string;
   displayName: string;
 }
 
 const HighResolutionCard = forwardRef<HTMLDivElement, HighResolutionCardProps>((
-  { coffeeBean, gradientStyles, showName, showFlavor, showIntensity, backgroundOnly, fontClass, displayName },
+  { coffeeBean, gradientStyles, showName, showFlavor, showIntensity, showBlend, backgroundOnly, fontClass, displayName },
   ref
 ) => {
   return (
     <div
       ref={ref}
-      className={fontClass}
       style={{
         ...gradientStyles,
         width: '1200px',
@@ -45,9 +45,18 @@ const HighResolutionCard = forwardRef<HTMLDivElement, HighResolutionCardProps>((
         <>
           {showName && (
             <div style={{ position: 'absolute', top: '72px', left: '72px', textAlign: 'left', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-              <h3 style={{ color: 'white', fontSize: '116px', fontWeight: 'bold', lineHeight: '1.2' }}>
+              <h3 className={fontClass} style={{ color: 'white', fontSize: '116px', fontWeight: 'bold', lineHeight: '1.2' }}>
                 {displayName}
               </h3>
+              {showBlend && coffeeBean.originType === 'blending' && (
+                <div style={{ marginTop: '24px' }}>
+                  <ul style={{ listStyle: 'none', padding: 0, color: 'white', fontSize: '36px' }}>
+                    {coffeeBean.blend.components.map((c, i) => (
+                      <li key={i}>{c.country}: {c.ratio}%</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
           {showFlavor && coffeeBean.flavorNotes.length > 0 && (
@@ -112,6 +121,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   const [showName, setShowName] = useState(true);
   const [showFlavor, setShowFlavor] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
+  const [showBlend, setShowBlend] = useState(true);
   const [backgroundOnly, setBackgroundOnly] = useState(false);
   const [selectedFont, setSelectedFont] = useState('font-ranade');
   const [displayNames, setDisplayNames] = useState({ ko: coffeeBean.displayName, en: null as string | null });
@@ -198,6 +208,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
           showName={showName}
           showFlavor={showFlavor}
           showIntensity={showIntensity}
+          showBlend={showBlend}
           backgroundOnly={backgroundOnly}
           fontClass={selectedFont}
           displayName={displayName}
@@ -214,16 +225,25 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
           <div className="w-full relative" style={{ paddingTop: '100%' }}>
             <div
               ref={previewCardRef}
-              className={`absolute top-0 left-0 w-full h-full ${selectedFont}`}
+              className={`absolute top-0 left-0 w-full h-full`}
               style={{ ...gradientStyles, borderRadius: '16px' }}
             >
               {!backgroundOnly && (
                 <>
                   {showName && (
                     <div className="absolute top-8 left-8 text-left" style={{ maxWidth: 'calc(80%)', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-                      <h3 className="text-white text-4xl font-bold leading-tight">
+                      <h3 className={`text-white text-4xl font-bold leading-tight ${selectedFont}`}>
                       {displayName}
                     </h3>
+                    {showBlend && coffeeBean.originType === 'blending' && (
+                      <div className="mt-2">
+                        <ul className="list-none p-0 text-white text-sm">
+                          {coffeeBean.blend.components.map((c, i) => (
+                            <li key={i}>{c.country}: {c.ratio}%</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                     </div>
                   )}
                   {showFlavor && coffeeBean.flavorNotes.length > 0 && (
@@ -297,6 +317,12 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                 <input type="checkbox" checked={showIntensity} onChange={(e) => setShowIntensity(e.target.checked)} disabled={backgroundOnly} className={`mr-4 text-black focus:ring-black w-5 h-5${backgroundOnly ? ' disabled:opacity-50' : ''}`} />
                 <span className="font-medium">강도 정보 표시</span>
               </label>
+              {coffeeBean.originType === 'blending' && (
+                <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+                  <input type="checkbox" checked={showBlend} onChange={(e) => setShowBlend(e.target.checked)} disabled={backgroundOnly} className={`mr-4 text-black focus:ring-black w-5 h-5${backgroundOnly ? ' disabled:opacity-50' : ''}`} />
+                  <span className="font-medium">블렌드 정보 표시</span>
+                </label>
+              )}
             </div>
           </div>
           <div className="space-y-4">
