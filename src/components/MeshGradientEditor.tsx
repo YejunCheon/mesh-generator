@@ -1,10 +1,10 @@
-import React, { useState, useCallback, useMemo, useRef, forwardRef } from 'react';
-import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../types';
+import React, { useState, useCallback, useMemo, useRef, forwardRef, useLayoutEffect } from 'react';
+import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../types'; // Adjust this path to your types file
 import * as htmlToImage from 'html-to-image';
 import { HiPhotograph, HiArchive } from 'react-icons/hi';
-import { translateDisplayName } from '../services/geminiService';
+import { translateDisplayName } from '../services/geminiService'; // Adjust this path to your services file
 
-// 헬퍼 함수
+// Helper function to convert hex to rgba
 const hexToRgba = (hex: string, alpha: number): string => {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -12,7 +12,7 @@ const hexToRgba = (hex: string, alpha: number): string => {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 };
 
-// 고해상도 카드 컴포넌트
+// High-resolution card component (The Single Source of Truth)
 interface HighResolutionCardProps {
   coffeeBean: CoffeeBean;
   gradientStyles: React.CSSProperties;
@@ -37,14 +37,14 @@ const HighResolutionCard = forwardRef<HTMLDivElement, HighResolutionCardProps>((
         width: '1200px',
         height: '1200px',
         position: 'relative',
-        borderRadius: '48px', // 16px * 3
+        borderRadius: '48px', // 16px * 3 for high resolution
         overflow: 'hidden',
       }}
     >
       {!backgroundOnly && (
         <>
           {showName && (
-            <div style={{ position: 'absolute', top: '72px', left: '72px', textAlign: 'left', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+            <div style={{ position: 'absolute', top: '72px', left: '72px', textAlign: 'left', wordBreak: 'keep-all', overflowWrap: 'break-word', maxWidth: '80%' }}>
               <h3 className={fontClass} style={{ color: 'white', fontSize: '116px', fontWeight: 'bold', lineHeight: '1.2' }}>
                 {displayName}
               </h3>
@@ -96,6 +96,7 @@ const HighResolutionCard = forwardRef<HTMLDivElement, HighResolutionCardProps>((
   );
 });
 
+// Main editor component props
 interface MeshGradientEditorProps {
   coffeeBean: CoffeeBean;
   colors: ColorRec[];
@@ -104,6 +105,7 @@ interface MeshGradientEditorProps {
   onBack: () => void;
 }
 
+// Available fonts constant
 const availableFonts = [
   { name: 'Ranade', className: 'font-ranade' },
   { name: 'Hahmlet', className: 'font-hahmlet' },
@@ -128,8 +130,26 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   const [currentLang, setCurrentLang] = useState<'ko' | 'en'>('ko');
   const [isTranslating, setIsTranslating] = useState(false);
   
-  const previewCardRef = useRef<HTMLDivElement>(null);
   const hiresCardRef = useRef<HTMLDivElement>(null);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useLayoutEffect(() => {
+    const previewContainer = previewContainerRef.current;
+    if (!previewContainer) return;
+
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        const { width } = entry.contentRect;
+        // The original width of HighResolutionCard is 1200px
+        setScale(width / 1200);
+      }
+    });
+
+    resizeObserver.observe(previewContainer);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   const toggleLanguage = async () => {
     if (currentLang === 'ko') {
@@ -175,19 +195,41 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   }, [colors, params.noiseIntensity]);
 
   const handleDownload = useCallback(async () => {
-    if (!hiresCardRef.current) {
-      alert('고해상도 카드 요소를 찾을 수 없습니다.');
-      return;
+    const cardElement = hiresCardRef.current;
+    if (!cardElement) {
+        alert('고해상도 카드 요소를 찾을 수 없습니다.');
+        return;
     }
     try {
-      const dataUrl = await htmlToImage.toPng(hiresCardRef.current, { quality: 1.0 });
-      const link = document.createElement('a');
-      link.download = `${coffeeBean.beanName}_mesh_gradient.png`;
-      link.href = dataUrl;
-      link.click();
+        // Temporarily remove transform for a pixel-perfect capture
+        const originalTransform = cardElement.style.transform;
+        cardElement.style.transform = '';
+
+        const dataUrl = await htmlToImage.toPng(cardElement, {
+            quality: 1.0,
+            width: 1200,
+            height: 1200,
+            pixelRatio: 1, // Ensure it captures at the defined 1200x1200 size
+        });
+        
+        // Restore the transform for the live preview
+        cardElement.style.transform = originalTransform;
+
+        const link = document.createElement('a');
+        link.download = `${coffeeBean.beanName}_mesh_gradient.png`;
+        link.href = dataUrl;
+        link.click();
     } catch (error) {
-      console.error('PNG 생성 중 오류:', error);
-      alert('PNG 이미지 생성에 실패했습니다.');
+        console.error('PNG 생성 중 오류:', error);
+        alert('PNG 이미지 생성에 실패했습니다.');
+        // Restore transform even if an error occurs
+        if (cardElement) {
+            const container = previewContainerRef.current;
+            if(container){
+                const { width } = container.getBoundingClientRect();
+                cardElement.style.transform = `scale(${width / 1200})`;
+            }
+        }
     }
   }, [coffeeBean.beanName]);
 
@@ -200,21 +242,6 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-      <div style={{ position: 'absolute', top: '-9999px', left: 0 }}>
-        <HighResolutionCard
-          ref={hiresCardRef}
-          coffeeBean={coffeeBean}
-          gradientStyles={gradientStyles}
-          showName={showName}
-          showFlavor={showFlavor}
-          showIntensity={showIntensity}
-          showBlend={showBlend}
-          backgroundOnly={backgroundOnly}
-          fontClass={selectedFont}
-          displayName={displayName}
-        />
-      </div>
-
       <div className="mb-8">
         <h3 className="text-3xl font-bold text-black mb-3">메시 그라디언트 카드 편집</h3>
         <p className="text-lg text-gray-600">선택한 컬러로 아름다운 카드를 만들어보세요</p>
@@ -222,65 +249,33 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <div className="w-full relative" style={{ paddingTop: '100%' }}>
-            <div
-              ref={previewCardRef}
-              className={`absolute top-0 left-0 w-full h-full`}
-              style={{ ...gradientStyles, borderRadius: '16px' }}
+          <div 
+            ref={previewContainerRef}
+            className="w-full relative overflow-hidden" 
+            style={{ paddingTop: '100%' }} // Maintains a 1:1 aspect ratio
+          >
+            <div 
+              className="absolute top-0 left-0" 
+              style={{ 
+                transform: `scale(${scale})`, 
+                transformOrigin: 'top left' 
+              }}
             >
-              {!backgroundOnly && (
-                <>
-                  {showName && (
-                    <div className="absolute top-8 left-8 text-left" style={{ maxWidth: 'calc(80%)', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-                      <h3 className={`text-white text-4xl font-bold leading-tight ${selectedFont}`}>
-                      {displayName}
-                    </h3>
-                    {showBlend && coffeeBean.originType === 'blending' && (
-                      <div className="mt-2">
-                        <ul className="list-none p-0 text-white text-sm">
-                          {coffeeBean.blend.components.map((c, i) => (
-                            <li key={i}>{c.country}: {c.ratio}%</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    </div>
-                  )}
-                  {showFlavor && coffeeBean.flavorNotes.length > 0 && (
-                    <div className="absolute bottom-6 left-6 text-left" >
-                      <p className="text-white text-md whitespace-normal break-words">
-                        {coffeeBean.flavorNotes.slice(0, 5).map((note, idx) => (
-                          <span key={idx} className="block"># {note}</span>
-                        ))}
-                      </p>
-                    </div>
-                  )}
-                  {showIntensity && (
-                    <div className="absolute right-6 bottom-6">
-                      <div className="mt-4">
-                        <span className="text-white text-sm font-medium block mb-2">Acidity</span>
-                        <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
-                          <div className="h-full bg-white rounded-full" style={{ width: `${(coffeeBean.intensity.acidity / 10) * 100}%` }} />
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <span className="text-white text-sm font-medium block mb-2">Sweetness</span>
-                        <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
-                          <div className="h-full bg-white rounded-full" style={{ width: `${(coffeeBean.intensity.sweetness / 10) * 100}%` }} />
-                        </div>
-                      </div>
-                      <div className="mt-4">
-                        <span className="text-white text-sm font-medium block mb-2">Body</span>
-                        <div className="w-32 h-1 bg-white bg-opacity-30 rounded-full overflow-hidden">
-                          <div className="h-full bg-white rounded-full" style={{ width: `${(coffeeBean.intensity.body / 10) * 100}%` }} />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
+              <HighResolutionCard
+                ref={hiresCardRef}
+                coffeeBean={coffeeBean}
+                gradientStyles={gradientStyles}
+                showName={showName}
+                showFlavor={showFlavor}
+                showIntensity={showIntensity}
+                showBlend={showBlend}
+                backgroundOnly={backgroundOnly}
+                fontClass={selectedFont}
+                displayName={displayName}
+              />
             </div>
           </div>
+          
           <div className="w-full flex justify-end items-center space-x-4">
             <button onClick={handleDownload} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm" title="Download as PNG">
               <HiPhotograph className="h-6 w-6" />
@@ -367,4 +362,3 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
 };
 
 export default MeshGradientEditor;
-
