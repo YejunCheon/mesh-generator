@@ -53,17 +53,30 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
   const watchBlendComponents = watch("blend.components");
   const totalRatio = watchBlendComponents?.reduce((acc, curr) => acc + (Number(curr.ratio) || 0), 0) || 0;
 
+  const watchOriginCountry = watch('origin.country');
+  const watchOriginRegion = watch('origin.region');
+  const watchOriginVariety = watch('origin.variety');
+  const watchOriginProcessing = watch('origin.processing');
+
+  const singleOriginDisplayName = [
+    watchOriginCountry,
+    watchOriginRegion,
+    watchOriginVariety,
+    watchOriginProcessing
+  ].filter(Boolean).join(' ');
+
   const handleFormSubmit = (data: CoffeeFormShape) => {
     let finalData: CoffeeBean;
 
     if (originType === 'single') {
       const { country, region, variety, processing } = data.origin;
-      const displayName = [country, region, variety, processing].filter(Boolean).join(' / ');
+      const displayName = [country, region, variety, processing].filter(Boolean).join(' ');
       
       finalData = {
         ...data,
         originType: 'single',
-        displayName: displayName || data.beanName,
+        beanName: displayName, // Set beanName to the constructed display name
+        displayName: displayName,
         origin: data.origin, // Ensure origin is passed
       };
     } else { // blending
@@ -93,21 +106,21 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 max-w-2xl mx-auto">
+    <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 mx-auto">
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-8">
-        <h3 className="text-3xl font-bold text-black mb-4 text-center">새로운 커피 정보 입력</h3>
 
-        <div className="flex justify-center space-x-4 p-1 bg-gray-100 rounded-full">
+        <div className="flex justify-center space-x-4 p-1 rounded-full">
           <ToggleButton label="싱글 오리진" type="single" />
           <ToggleButton label="블렌드" type="blending" />
         </div>
 
         {originType === 'single' && (
           <div className="space-y-6 animate-fade-in">
-            <h4 className="text-xl font-semibold text-gray-800 border-b pb-3">싱글 오리진 정보</h4>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">원두명 *</label>
-              <input {...register('beanName', { required: originType === 'single' })} className="input-field" placeholder="예: 에티오피아 코케 허니" />
+              <label className="block text-sm font-semibold text-gray-700 mb-2">미리보기 (원두명)</label>
+              <p className="input-field bg-gray-100 text-gray-600">
+                {singleOriginDisplayName}
+              </p>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">산지 (국가) *</label>
@@ -134,7 +147,6 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
 
         {originType === 'blending' && (
           <div className="space-y-6 animate-fade-in">
-            <h4 className="text-xl font-semibold text-gray-800 border-b pb-3">블렌드 정보</h4>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">블렌드 이름 *</label>
               <input {...register('beanName', { required: originType === 'blending' })} className="input-field" placeholder="예: 하우스 블렌드" />
