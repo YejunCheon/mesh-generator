@@ -1,5 +1,5 @@
 import React from 'react';
-import DiscreteSlider from './DiscreteSlider';
+import DiscreteSlider from '../ui/DiscreteSlider';
 import { CoffeeBean } from '../types';
 
 interface IntensitySelectorProps {

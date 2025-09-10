@@ -1,16 +1,16 @@
 import React from 'react';
-import NewCoffeeInputForm from './components/NewCoffeeInputForm';
-import CoffeeSummary from './components/CoffeeSummary';
-import ColorSelection from './components/ColorSelection';
-import MeshGradientEditor from './components/MeshGradientEditor';
-import DiscreteSlider from './components/DiscreteSlider';
-import StepLayout from './components/StepLayout';
-import IntensitySelector from './components/IntensitySelector';
-import FlavorNoteSelector from './components/FlavorNoteSelector';
-import ProgressBar from './components/ProgressBar';
-import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from './types';
+import NewCoffeeInputForm from './components/coffee-flow/NewCoffeeInputForm';
+import CoffeeSummary from './components/coffee-flow/CoffeeSummary';
+import ColorSelection from './components/coffee-flow/ColorSelection';
+import MeshGradientEditor from './components/editor/MeshGradientEditor';
+import StepLayout from './components/ui/StepLayout';
+import IntensitySelector from './components/coffee-flow/IntensitySelector';
+import FlavorNoteSelector from './components/coffee-flow/FlavorNoteSelector';
+import ProgressBar from './components/ui/ProgressBar';
+import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams, RoastLevel } from './types';
 import { useCoffeeFlow } from './hooks/useCoffeeFlow';
 import { generateColorsWithGemini } from './services/geminiService';
+import RoastLevelSelector from './components/coffee-flow/RoastLevelSelector';
 
 function App() {
   const {
@@ -86,28 +86,15 @@ function App() {
     switch (currentStep) {
       case 'coffee-input':
         return <NewCoffeeInputForm onSubmit={handleCoffeeSubmit} />;
-        
+      
       case 'roast-level':
         return (
-          <StepLayout
-            title="배전도를 선택해주세요"
+          <RoastLevelSelector
+            roastLevel={coffeeBean?.roastLevel}
+            onRoastLevelChange={(roastLevel) => updateCoffeeBean({ roastLevel })}
             onBack={() => startCoffeeInputFlow()}
             onNext={handleRoastLevelSubmit}
-            nextButtonDisabled={!coffeeBean?.roastLevel}
-          >
-            <div className="mb-8">
-              <DiscreteSlider
-                value={coffeeBean?.roastLevel || ''}
-                onChange={(value) => updateCoffeeBean({ roastLevel: value as any })}
-                options={[
-                  { value: 'light', label: '라이트' },
-                  { value: 'medium', label: '미디엄' },
-                  { value: 'dark', label: '다크' },
-                  { value: 'espresso', label: '에스프레소' }
-                ]}
-              />
-            </div>
-          </StepLayout>
+          />
         );
         
       case 'flavor-intensity':
