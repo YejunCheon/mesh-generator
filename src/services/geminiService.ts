@@ -134,3 +134,30 @@ JSON 형식으로만 응답해주세요.
     ];
   }
 };
+
+export const translateDisplayName = async (name: string): Promise<string> => {
+  console.log('[Gemini] 이름 번역 요청 시작');
+  try {
+    if (!API_KEY) {
+      console.error('[Gemini] API 키가 없습니다.');
+      throw new Error('Gemini API 키가 설정되지 않았습니다.');
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+    const prompt = `Translate the following coffee bean name to English. Respond with only the translated name, without any extra text or quotation marks. For example, if the input is "에티오피아 예가체프", the output should be "Ethiopia Yirgacheffe".\n\nName to translate: "${name}"`;
+
+    console.log('[Gemini] 보낸 프롬프트:', prompt);
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text().trim();
+
+    console.log('[Gemini] 번역 완료:', text);
+    return text;
+
+  } catch (error: any) {
+    console.error('[Gemini] 이름 번역 실패:', error?.message || error);
+    throw new Error('Failed to translate name.');
+  }
+};

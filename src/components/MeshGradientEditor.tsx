@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo, useRef, forwardRef } from 'react
 import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../types';
 import * as htmlToImage from 'html-to-image';
 import { HiPhotograph, HiArchive } from 'react-icons/hi';
+import { translateDisplayName } from '../services/geminiService';
 
 // 헬퍼 함수
 const hexToRgba = (hex: string, alpha: number): string => {
@@ -20,10 +21,11 @@ interface HighResolutionCardProps {
   showIntensity: boolean;
   backgroundOnly: boolean;
   fontClass: string;
+  displayName: string;
 }
 
 const HighResolutionCard = forwardRef<HTMLDivElement, HighResolutionCardProps>((
-  { coffeeBean, gradientStyles, showName, showFlavor, showIntensity, backgroundOnly, fontClass },
+  { coffeeBean, gradientStyles, showName, showFlavor, showIntensity, backgroundOnly, fontClass, displayName },
   ref
 ) => {
   return (
@@ -43,8 +45,8 @@ const HighResolutionCard = forwardRef<HTMLDivElement, HighResolutionCardProps>((
         <>
           {showName && (
             <div style={{ position: 'absolute', top: '72px', left: '72px', textAlign: 'left', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-              <h3 style={{ color: 'white', fontSize: '80px', fontWeight: 'bold', lineHeight: '1.2' }}>
-                {coffeeBean.displayName}
+              <h3 style={{ color: 'white', fontSize: '116px', fontWeight: 'bold', lineHeight: '1.2' }}>
+                {displayName}
               </h3>
             </div>
           )}
@@ -112,9 +114,34 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   const [showIntensity, setShowIntensity] = useState(true);
   const [backgroundOnly, setBackgroundOnly] = useState(false);
   const [selectedFont, setSelectedFont] = useState('font-ranade');
+  const [displayNames, setDisplayNames] = useState({ ko: coffeeBean.displayName, en: null as string | null });
+  const [currentLang, setCurrentLang] = useState<'ko' | 'en'>('ko');
+  const [isTranslating, setIsTranslating] = useState(false);
   
   const previewCardRef = useRef<HTMLDivElement>(null);
   const hiresCardRef = useRef<HTMLDivElement>(null);
+
+  const toggleLanguage = async () => {
+    if (currentLang === 'ko') {
+      if (displayNames.en) {
+        setCurrentLang('en');
+      } else {
+        setIsTranslating(true);
+        try {
+          const translation = await translateDisplayName(displayNames.ko);
+          setDisplayNames(prev => ({ ...prev, en: translation }));
+          setCurrentLang('en');
+        } catch (error) {
+          console.error("Translation failed:", error);
+          alert("이름을 번역하는 데 실패했습니다.");
+        } finally {
+          setIsTranslating(false);
+        }
+      }
+    } else {
+      setCurrentLang('ko');
+    }
+  };
 
   const generateMeshGradient = useCallback(() => {
     if (colors.length === 0) return { background: '#000', backgroundImage: 'none' };
@@ -159,6 +186,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   };
 
   const gradientStyles = useMemo(() => generateMeshGradient(), [generateMeshGradient]);
+  const displayName = displayNames[currentLang] || displayNames.ko;
 
   return (
     <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200">
@@ -172,6 +200,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
           showIntensity={showIntensity}
           backgroundOnly={backgroundOnly}
           fontClass={selectedFont}
+          displayName={displayName}
         />
       </div>
 
@@ -191,9 +220,9 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
               {!backgroundOnly && (
                 <>
                   {showName && (
-                    <div className="absolute top-6 left-6 text-left" style={{ maxWidth: 'calc(100% - 2rem)', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
-                      <h3 className="text-white text-2xl font-bold leading-tight">
-                      {coffeeBean.displayName}
+                    <div className="absolute top-8 left-8 text-left" style={{ maxWidth: 'calc(80%)', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
+                      <h3 className="text-white text-4xl font-bold leading-tight">
+                      {displayName}
                     </h3>
                     </div>
                   )}
@@ -245,37 +274,29 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
         <div className="space-y-8">
           <div className="space-y-6">
             <div className="space-y-4">
-              {[
-                {
-                  label: '배경만 표시',
-                  checked: backgroundOnly,
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setBackgroundOnly(e.target.checked),
-                  disabled: false,
-                },
-                {
-                  label: '원두 정보 표시',
-                  checked: showName,
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowName(e.target.checked),
-                  disabled: backgroundOnly,
-                },
-                {
-                  label: '플레이버 노트 표시',
-                  checked: showFlavor,
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowFlavor(e.target.checked),
-                  disabled: backgroundOnly,
-                },
-                {
-                  label: '강도 정보 표시',
-                  checked: showIntensity,
-                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowIntensity(e.target.checked),
-                  disabled: backgroundOnly,
-                },
-              ].map((item) => (
-                <label key={item.label} className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
-                  <input type="checkbox" checked={item.checked} onChange={item.onChange} disabled={item.disabled} className={`mr-4 text-black focus:ring-black w-5 h-5${item.disabled ? ' disabled:opacity-50' : ''}`} />
-                  <span className="font-medium">{item.label}</span>
-                </label>
-              ))}
+              <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+                <input type="checkbox" checked={backgroundOnly} onChange={(e) => setBackgroundOnly(e.target.checked)} className={'mr-4 text-black focus:ring-black w-5 h-5'} />
+                <span className="font-medium">배경만 표시</span>
+              </label>
+              <div className="flex items-center p-4 border border-gray-200 rounded-lg">
+                <input type="checkbox" checked={showName} onChange={(e) => setShowName(e.target.checked)} disabled={backgroundOnly} className={`mr-4 text-black focus:ring-black w-5 h-5${backgroundOnly ? ' disabled:opacity-50' : ''}`} />
+                <span className="font-medium flex-grow">원두 정보 표시</span>
+                <button 
+                  onClick={toggleLanguage} 
+                  disabled={isTranslating || backgroundOnly || !showName}
+                  className="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-1 px-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isTranslating ? '번역 중...' : (currentLang === 'ko' ? '영문으로' : '원본으로')}
+                </button>
+              </div>
+              <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+                <input type="checkbox" checked={showFlavor} onChange={(e) => setShowFlavor(e.target.checked)} disabled={backgroundOnly} className={`mr-4 text-black focus:ring-black w-5 h-5${backgroundOnly ? ' disabled:opacity-50' : ''}`} />
+                <span className="font-medium">플레이버 노트 표시</span>
+              </label>
+              <label className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
+                <input type="checkbox" checked={showIntensity} onChange={(e) => setShowIntensity(e.target.checked)} disabled={backgroundOnly} className={`mr-4 text-black focus:ring-black w-5 h-5${backgroundOnly ? ' disabled:opacity-50' : ''}`} />
+                <span className="font-medium">강도 정보 표시</span>
+              </label>
             </div>
           </div>
           <div className="space-y-4">
@@ -320,3 +341,4 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
 };
 
 export default MeshGradientEditor;
+
