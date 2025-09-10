@@ -43,7 +43,7 @@ const HighResolutionCard = forwardRef<HTMLDivElement, HighResolutionCardProps>((
           {showName && (
             <div style={{ position: 'absolute', top: '72px', left: '72px', textAlign: 'left', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
               <h3 style={{ color: 'white', fontSize: '80px', fontWeight: 'bold', lineHeight: '1.2' }}>
-                {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.farm, coffeeBean.beanName].filter(Boolean).join(' ')}
+                {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.processing, coffeeBean.beanName].filter(Boolean).join(' ')}
               </h3>
             </div>
           )}
@@ -183,7 +183,7 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
                   {showName && (
                     <div className="absolute top-6 left-6 text-left" style={{ maxWidth: 'calc(100% - 2rem)', wordBreak: 'keep-all', overflowWrap: 'break-word' }}>
                       <h3 className="text-white text-2xl font-bold drop-shadow-md leading-tight">
-                        {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.farm, coffeeBean.beanName].filter(Boolean).join(' ')}
+                        {[coffeeBean.origin.country, coffeeBean.origin.region, coffeeBean.origin.processing, coffeeBean.beanName].filter(Boolean).join(' ')}
                       </h3>
                     </div>
                   )}
@@ -236,10 +236,30 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
           <div className="space-y-6">
             <div className="space-y-4">
               {[
-                { label: '배경만 표시', checked: backgroundOnly, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setBackgroundOnly(e.target.checked), disabled: false },
-                { label: '원두 정보 표시', checked: showName, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowName(e.target.checked), disabled: backgroundOnly },
-                { label: '플레이버 노트 표시', checked: showFlavor, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowFlavor(e.target.checked), disabled: backgroundOnly },
-                { label: '강도 정보 표시', checked: showIntensity, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowIntensity(e.target.checked), disabled: backgroundOnly },
+                {
+                  label: '배경만 표시',
+                  checked: backgroundOnly,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setBackgroundOnly(e.target.checked),
+                  disabled: false,
+                },
+                {
+                  label: '원두 정보 표시',
+                  checked: showName,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowName(e.target.checked),
+                  disabled: backgroundOnly,
+                },
+                {
+                  label: '플레이버 노트 표시',
+                  checked: showFlavor,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowFlavor(e.target.checked),
+                  disabled: backgroundOnly,
+                },
+                {
+                  label: '강도 정보 표시',
+                  checked: showIntensity,
+                  onChange: (e: React.ChangeEvent<HTMLInputElement>) => setShowIntensity(e.target.checked),
+                  disabled: backgroundOnly,
+                },
               ].map((item) => (
                 <label key={item.label} className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors">
                   <input type="checkbox" checked={item.checked} onChange={item.onChange} disabled={item.disabled} className={`mr-4 text-black focus:ring-black w-5 h-5${item.disabled ? ' disabled:opacity-50' : ''}`} />

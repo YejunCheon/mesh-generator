@@ -1,8 +1,11 @@
 export interface CoffeeBean {
+  originType: 'single' | 'blending';
   origin: {
     country: string;
     region?: string;
-    farm?: string;
+    altitude?: string;
+    variety?: string;
+    processing?: string;
   };
   beanName: string;
   roastLevel: RoastLevel;

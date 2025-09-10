@@ -28,16 +28,17 @@ const CoffeeSummary: React.FC<CoffeeSummaryProps> = ({ coffeeBean, onConfirm, on
         <h4 className="text-lg font-semibold text-black mb-4">커피 정보</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="font-medium text-gray-700">원산지:</span> 
+            <span className="font-medium text-gray-700">산지:</span> 
             <span className="ml-2 text-gray-900">
               {coffeeBean.origin.country}
-              {coffeeBean.origin.region && `, ${coffeeBean.origin.region}`}
-              {coffeeBean.origin.farm && `, ${coffeeBean.origin.farm}`}
+              {coffeeBean.origin.region && ` ${coffeeBean.origin.region}`}
             </span>
           </div>
           <div>
             <span className="font-medium text-gray-700">원두명:</span> 
-            <span className="ml-2 text-gray-900">{coffeeBean.beanName}</span>
+            {coffeeBean.beanName && (
+              <span className="ml-2 text-gray-900">{coffeeBean.beanName}</span>
+            )}
           </div>
           <div>
             <span className="font-medium text-gray-700">배전도:</span> 
@@ -49,28 +50,48 @@ const CoffeeSummary: React.FC<CoffeeSummaryProps> = ({ coffeeBean, onConfirm, on
           </div>
           <div>
             <span className="font-medium text-gray-700">플레이버:</span> 
-            <span className="ml-2 text-gray-900">{coffeeBean.flavorNotes.join(', ')}</span>
+            <span className="ml-2 text-gray-900">{coffeeBean.flavorNotes?.join(', ') || 'N/A'}</span>
           </div>
+          {coffeeBean.origin.variety && (
+            <div>
+              <span className="font-medium text-gray-700">품종:</span> 
+              <span className="ml-2 text-gray-900">{coffeeBean.origin.variety}</span>
+            </div>
+          )}
+          {coffeeBean.origin.processing && (
+            <div>
+              <span className="font-medium text-gray-700">프로세싱:</span> 
+              <span className="ml-2 text-gray-900">{coffeeBean.origin.processing}</span>
+            </div>
+          )}
+          {coffeeBean.origin.altitude && (
+            <div>
+              <span className="font-medium text-gray-700">고도:</span> 
+              <span className="ml-2 text-gray-900">{coffeeBean.origin.altitude}m</span>
+            </div>
+          )}
         </div>
         
         {/* 강도 정보 */}
-        <div className="mt-6">
-          <h5 className="font-medium text-gray-700 mb-3">강도 지표</h5>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-lg font-bold text-black">{coffeeBean.intensity.acidity}/10</div>
-              <div className="text-xs text-gray-600">산도</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-black">{coffeeBean.intensity.sweetness}/10</div>
-              <div className="text-xs text-gray-600">당도</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-black">{coffeeBean.intensity.body}/10</div>
-              <div className="text-xs text-gray-600">바디감</div>
+        {coffeeBean.intensity && (
+          <div className="mt-6">
+            <h5 className="font-medium text-gray-700 mb-3">강도 지표</h5>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <div className="text-lg font-bold text-black">{coffeeBean.intensity.acidity}/10</div>
+                <div className="text-xs text-gray-600">산도</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-black">{coffeeBean.intensity.sweetness}/10</div>
+                <div className="text-xs text-gray-600">당도</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-black">{coffeeBean.intensity.body}/10</div>
+                <div className="text-xs text-gray-600">바디감</div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* 네비게이션 버튼 */}

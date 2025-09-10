@@ -1,5 +1,5 @@
 import React from 'react';
-import CoffeeInputForm from './components/CoffeeInputForm';
+import NewCoffeeInputForm from './components/NewCoffeeInputForm';
 import CoffeeSummary from './components/CoffeeSummary';
 import ColorSelection from './components/ColorSelection';
 import MeshGradientEditor from './components/MeshGradientEditor';
@@ -85,7 +85,7 @@ function App() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 'coffee-input':
-        return <CoffeeInputForm onSubmit={handleCoffeeSubmit} />;
+        return <NewCoffeeInputForm onSubmit={handleCoffeeSubmit} />;
         
       case 'roast-level':
         return (
@@ -170,9 +170,6 @@ function App() {
           <h1 className="text-5xl font-bold text-black mb-4">
             Mesh Gradient Card Generator
           </h1>
-          <p className="text-xl text-gray-600">
-            커피 원두의 특성을 아름다운 메시 그라디언트로 표현해보세요
-          </p>
         </header>
 
         <div className="max-w-4xl mx-auto">

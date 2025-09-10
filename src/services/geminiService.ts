@@ -26,7 +26,7 @@ export const generateColorsWithGemini = async (coffeeBean: CoffeeBean): Promise<
 5개의 컬러는 너무 비슷하면 안되고 조화를 이루어야합니다.
 
 커피 정보:
-- 원산지: ${coffeeBean.origin.country}${coffeeBean.origin.region ? `, ${coffeeBean.origin.region}` : ''}${coffeeBean.origin.farm ? `, ${coffeeBean.origin.farm}` : ''}
+- 원산지: ${coffeeBean.origin.country}${coffeeBean.origin.region ? `, ${coffeeBean.origin.region}` : ''}${coffeeBean.origin ? `, ${coffeeBean.origin}` : ''}
 - 원두명: ${coffeeBean.beanName}
 - 배전도: ${coffeeBean.roastLevel}
 - 플레이버 노트: ${coffeeBean.flavorNotes.join(', ')}
