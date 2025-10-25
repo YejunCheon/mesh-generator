@@ -76,9 +76,9 @@ const CardContent: React.FC<CardContentProps> = ({
           }}
         >
           <p style={{ color: 'white',
-            ...getScaledStyle(42) }}>
+            ...getScaledStyle(38) }}>
             {coffeeBean.flavorNotes.slice(0, 5).map((note, idx) => (
-              <span key={idx} style={{ display: 'block' }}># {note}</span>
+              <span key={idx} style={{ display: 'block', whiteSpace: 'nowrap' }}># {note}</span>
             ))}
           </p>
         </div>
