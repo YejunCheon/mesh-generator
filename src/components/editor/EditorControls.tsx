@@ -1,5 +1,5 @@
 import React from 'react';
-import { CoffeeBean, MeshGradientParams } from '../types';
+import { CoffeeBean, MeshGradientParams } from '../../types';
 import DisplayOptions from './DisplayOptions';
 import FontSelector from './FontSelector';
 import ColorSpreadControl from './ColorSpreadControl';

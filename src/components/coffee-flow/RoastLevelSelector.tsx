@@ -1,5 +1,5 @@
 import React from 'react';
-import { RoastLevel } from '../types';
+import { RoastLevel } from '../../types';
 import DiscreteSlider from '../ui/DiscreteSlider';
 import StepLayout from '../ui/StepLayout';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { CoffeeBean, FlavorNode } from '../types';
-import { flavorWheelData } from '../data/flavor-wheel';
+import { CoffeeBean, FlavorNode } from '../../types';
+import { flavorWheelData } from '../../data/flavor-wheel';
 
 interface FlavorNoteSelectorProps {
   coffeeBean: CoffeeBean;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CoffeeBean } from '../types';
+import { CoffeeBean } from '../../types';
 
 interface CardContentProps {
   coffeeBean: CoffeeBean;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ColorRecommendation as ColorRec } from '../types';
+import { ColorRecommendation as ColorRec } from '../../types';
 
 interface ColorSelectionProps {
   colors: ColorRec[];

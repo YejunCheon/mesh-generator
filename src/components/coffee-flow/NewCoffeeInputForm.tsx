@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { CoffeeBean, SingleOriginDetails, BlendDetails, RoastLevel } from '../types';
+import { CoffeeBean, SingleOriginDetails, BlendDetails, RoastLevel } from '../../types';
 import { HiPencil } from 'react-icons/hi';
 
 interface NewCoffeeInputFormProps {

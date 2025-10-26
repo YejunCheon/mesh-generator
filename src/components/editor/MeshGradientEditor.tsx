@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useMemo, useRef, forwardRef } from 'react';
-import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../types';
+import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../../types';
 import * as htmlToImage from 'html-to-image';
 import { HiPhotograph, HiArchive } from 'react-icons/hi';
 import CardContent from './CardContent';
-import useResponsiveScale from '../hooks/useResponsiveScale';
-import useDisplayNameTranslation from '../hooks/useDisplayNameTranslation';
+import useResponsiveScale from '../../hooks/useResponsiveScale';
+import useDisplayNameTranslation from '../../hooks/useDisplayNameTranslation';
 import EditorControls from './EditorControls';
 
 // Helper function to convert hex to rgba

@@ -1,5 +1,5 @@
 import React from 'react';
-import { CoffeeFlowStep } from '../hooks/useCoffeeFlow';
+import { CoffeeFlowStep } from '../../hooks/useCoffeeFlow';
 
 interface ProgressBarProps {
   currentStep: CoffeeFlowStep;

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CoffeeBean } from '../types';
+import { CoffeeBean } from '../../types';
 
 interface CoffeeSummaryProps {
   coffeeBean: CoffeeBean;
