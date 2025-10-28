@@ -98,7 +98,7 @@ const CoffeeSummary: React.FC<CoffeeSummaryProps> = ({ coffeeBean, onConfirm, on
         {coffeeBean.intensity && (
           <div className="mt-6">
             <h5 className="font-medium text-gray-700 mb-3">강도 지표</h5>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-lg font-bold text-black">{coffeeBean.intensity.acidity}/10</div>
                 <div className="text-xs text-gray-600">산도</div>
@@ -110,6 +110,10 @@ const CoffeeSummary: React.FC<CoffeeSummaryProps> = ({ coffeeBean, onConfirm, on
               <div className="text-center">
                 <div className="text-lg font-bold text-black">{coffeeBean.intensity.body}/10</div>
                 <div className="text-xs text-gray-600">바디감</div>
+              </div>
+              <div className="text-center">
+                <div className="text-lg font-bold text-black">{coffeeBean.intensity.aroma}/10</div>
+                <div className="text-xs text-gray-600">아로마</div>
               </div>
             </div>
           </div>
