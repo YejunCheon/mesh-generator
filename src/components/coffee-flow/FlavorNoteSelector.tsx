@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CoffeeBean, FlavorNode } from '../../types';
 import { flavorWheelData } from '../../data/flavor-wheel';
 
@@ -10,6 +10,22 @@ interface FlavorNoteSelectorProps {
 const FlavorNoteSelector: React.FC<FlavorNoteSelectorProps> = ({ coffeeBean, onFlavorNotesChange }) => {
   const [customNote, setCustomNote] = useState('');
   const [allCustomNotes, setAllCustomNotes] = useState<string[]>([]);
+
+  useEffect(() => {
+    const flavorWheelNotes = new Set<string>();
+    flavorWheelData.children?.forEach(category => {
+      category.children?.forEach(subCategory => {
+        if (subCategory.children) {
+          subCategory.children.forEach(note => flavorWheelNotes.add(note.name));
+        } else {
+          flavorWheelNotes.add(subCategory.name);
+        }
+      });
+    });
+
+    const customNotesFromProp = coffeeBean.flavorNotes.filter(note => !flavorWheelNotes.has(note));
+    setAllCustomNotes(customNotesFromProp);
+  }, [coffeeBean.flavorNotes]);
 
   const handleFlavorNoteChange = (noteName: string, isChecked: boolean) => {
     const newNotes = isChecked
