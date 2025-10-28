@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 
-const Auth: React.FC = () => {
+interface AuthProps {
+  onSuccess?: () => void;
+}
+
+const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,6 +32,9 @@ const Auth: React.FC = () => {
       if (isSignUp && response.data.user) {
         alert('회원가입이 완료되었습니다. 이메일을 확인하여 계정을 활성화해주세요.');
       }
+
+      onSuccess?.();
+
     } catch (error: any) {
       setError(error.message || 'An unexpected error occurred.');
     } finally {
