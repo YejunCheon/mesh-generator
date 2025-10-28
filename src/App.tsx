@@ -11,8 +11,12 @@ import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from 
 import { useCoffeeFlow } from './hooks/useCoffeeFlow';
 import { generateColorsWithGemini } from './services/geminiService';
 import RoastLevelSelector from './components/coffee-flow/RoastLevelSelector';
+import { useAuth } from './contexts/AuthContext';
+import Auth from './components/auth/Auth';
+import { supabase } from './lib/supabaseClient';
 
 function App() {
+  const { session, loading } = useAuth();
   const {
     currentStep,
     coffeeBean,
@@ -149,6 +153,10 @@ function App() {
     }
   };
 
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
@@ -156,14 +164,21 @@ function App() {
           <h1 className="text-5xl font-bold text-black mb-4">
             Typed Brew
           </h1>
+          {session && <button onClick={() => supabase.auth.signOut()}>Sign Out</button>}
         </header>
 
         <div className="max-w-4xl mx-auto">
-          {/* Progress Bar */}
-          <ProgressBar currentStep={currentStep} />
+          {!session ? (
+            <Auth />
+          ) : (
+            <>
+              {/* Progress Bar */}
+              <ProgressBar currentStep={currentStep} />
 
-          {/* Step Content */}
-          {renderStepContent()}
+              {/* Step Content */}
+              {renderStepContent()}
+            </>
+          )}
         </div>
       </div>
     </div>
