@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import NewCoffeeInputForm from './components/coffee-flow/NewCoffeeInputForm';
 import CoffeeSummary from './components/coffee-flow/CoffeeSummary';
 import ColorSelection from './components/coffee-flow/ColorSelection';
@@ -11,8 +11,17 @@ import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from 
 import { useCoffeeFlow } from './hooks/useCoffeeFlow';
 import { generateColorsWithGemini } from './services/geminiService';
 import RoastLevelSelector from './components/coffee-flow/RoastLevelSelector';
+import { useAuth } from './contexts/AuthContext';
+
+import Header from './components/layout/Header';
+
+import Modal from './components/ui/Modal';
+import Auth from './components/auth/Auth';
 
 function App() {
+  const { loading } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   const {
     currentStep,
     coffeeBean,
@@ -141,6 +150,7 @@ function App() {
             params={meshGradientParams}
             onParamsChange={handleParamsChange}
             onBack={() => startColorSelectionFlow(colors)}
+            onSaveClick={() => setIsAuthModalOpen(true)}
           />
         );
         
@@ -149,23 +159,35 @@ function App() {
     }
   };
 
+  if (loading) {
+    return <div className="h-screen w-screen flex justify-center items-center">Loading...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="container mx-auto px-4 py-8">
-        <header className="text-center mb-12">
+      <Header onSignInClick={() => setIsAuthModalOpen(true)} />
+      
+      <main className="container mx-auto px-4 py-8">
+        <div className="text-center mb-12">
           <h1 className="text-5xl font-bold text-black mb-4">
             Typed Brew
           </h1>
-        </header>
+        </div>
 
         <div className="max-w-4xl mx-auto">
-          {/* Progress Bar */}
-          <ProgressBar currentStep={currentStep} />
+          <>
+            {/* Progress Bar */}
+            <ProgressBar currentStep={currentStep} />
 
-          {/* Step Content */}
-          {renderStepContent()}
+            {/* Step Content */}
+            {renderStepContent()}
+          </>
         </div>
-      </div>
+      </main>
+      
+      <Modal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)}>
+        <Auth onSuccess={() => setIsAuthModalOpen(false)} />
+      </Modal>
     </div>
   );
 }

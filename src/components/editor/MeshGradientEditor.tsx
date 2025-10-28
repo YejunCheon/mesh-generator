@@ -7,6 +7,9 @@ import useResponsiveScale from '../../hooks/useResponsiveScale';
 import useDisplayNameTranslation from '../../hooks/useDisplayNameTranslation';
 import EditorControls from './EditorControls';
 
+import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../contexts/AuthContext';
+
 // Helper function to convert hex to rgba
 const hexToRgba = (hex: string, alpha: number): string => {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -67,6 +70,7 @@ interface MeshGradientEditorProps {
   params: MeshGradientParams;
   onParamsChange: (params: MeshGradientParams) => void;
   onBack: () => void;
+  onSaveClick: () => void;
 }
 
 // Available fonts constant
@@ -77,13 +81,17 @@ const availableFonts = [
   { name: 'HS Santokki', className: 'font-hssantokki' },
 ];
 
+
 const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
   coffeeBean,
   colors,
   params,
   onParamsChange,
-  onBack
+  onBack,
+  onSaveClick
 }) => {
+  const { session, user } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
   const [showName, setShowName] = useState(true);
   const [showFlavor, setShowFlavor] = useState(true);
   const [showIntensity, setShowIntensity] = useState(true);
@@ -160,8 +168,34 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
     URL.revokeObjectURL(url);
   }, [coffeeBean, colors, params]);
 
-  const handleSaveToSupabase = () => {
-    alert('Supabase 저장 기능은 Phase 2에서 구현됩니다!');
+  const handleSaveToAccount = async () => {
+    if (!session || !user) {
+      onSaveClick();
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const cardData = {
+        user_id: user.id,
+        coffee_bean_data: coffeeBean,
+        colors: colors,
+        params: params,
+      };
+
+      const { error } = await supabase.from('coffee_cards').insert([cardData]);
+
+      if (error) {
+        throw error;
+      }
+
+      alert('성공적으로 저장되었습니다!');
+    } catch (error: any) {
+      console.error('Error saving card:', error);
+      alert(`저장에 실패했습니다: ${error.message}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const gradientStyles = useMemo(() => generateMeshGradient(), [generateMeshGradient]);
@@ -227,7 +261,12 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
             <button onClick={handleJsonDownload} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm" title="Download as JSON">
               <HiDocumentDownload className="h-6 w-6" />
             </button>
-            <button onClick={handleSaveToSupabase} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm" title="Save to Supabase">
+            <button 
+              onClick={handleSaveToAccount} 
+              disabled={isSaving}
+              className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              title="내 계정에 저장"
+            >
               <HiArchive className="h-6 w-6" />
             </button>
           </div>
