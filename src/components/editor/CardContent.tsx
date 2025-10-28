@@ -109,6 +109,12 @@ const CardContent: React.FC<CardContentProps> = ({
               <div style={{ height: '100%', background: 'white', borderRadius: '9999px', width: `${(coffeeBean.intensity.body / 10) * 100}%` }} />
             </div>
           </div>
+          <div style={{ marginTop: getScaledMargin(24) }}>
+            <span style={{ color: 'white', ...getScaledStyle(36), fontWeight: 500, display: 'block', marginBottom: getScaledMargin(12) }}>Aroma</span>
+            <div style={{ width: getScaledWidth(384), height: getScaledHeight(6), background: 'rgba(255,255,255,0.3)', borderRadius: '9999px', overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'white', borderRadius: '9999px', width: `${(coffeeBean.intensity.aroma / 10) * 100}%` }} />
+            </div>
+          </div>
         </div>
       )}
     </>
