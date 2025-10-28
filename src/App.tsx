@@ -18,24 +18,23 @@ function App() {
     coffeeBean,
     colors,
     selectedColors,
+    meshGradientParams,
     startCoffeeInputFlow,
     startRoastLevelFlow,
     startFlavorIntensityFlow,
     startCoffeeSummaryFlow,
     startColorSelectionFlow,
     startMeshGradientEditorFlow,
+    startMeshGradientEditorWithImportedData,
     updateCoffeeBean,
     setColors,
-    setSelectedColors
+    setSelectedColors,
+    updateMeshGradientParams
   } = useCoffeeFlow();
 
-  const [params, setParams] = React.useState<MeshGradientParams>({
-    noiseIntensity: 50,
-    gradientDirection: 45,
-    blendMode: 'normal',
-    colorDistribution: 'uniform',
-    borderStyle: 'rounded'
-  });
+  const handleParamsChange = (params: MeshGradientParams) => {
+    updateMeshGradientParams(params);
+  };
 
   const handleCoffeeSubmit = (bean: CoffeeBean) => {
     startRoastLevelFlow(bean);
@@ -85,7 +84,7 @@ function App() {
   const renderStepContent = () => {
     switch (currentStep) {
       case 'coffee-input':
-        return <NewCoffeeInputForm onSubmit={handleCoffeeSubmit} />;
+        return <NewCoffeeInputForm onSubmit={handleCoffeeSubmit} onImport={startMeshGradientEditorWithImportedData} />;
       
       case 'roast-level':
         return (
@@ -139,8 +138,8 @@ function App() {
           <MeshGradientEditor
             coffeeBean={coffeeBean!}
             colors={selectedColors}
-            params={params}
-            onParamsChange={setParams}
+            params={meshGradientParams}
+            onParamsChange={handleParamsChange}
             onBack={() => startColorSelectionFlow(colors)}
           />
         );

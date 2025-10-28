@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useRef, forwardRef } from 'react';
 import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../../types';
 import * as htmlToImage from 'html-to-image';
-import { HiPhotograph, HiArchive } from 'react-icons/hi';
+import { HiPhotograph, HiArchive, HiDocumentDownload } from 'react-icons/hi';
 import CardContent from './CardContent';
 import useResponsiveScale from '../../hooks/useResponsiveScale';
 import useDisplayNameTranslation from '../../hooks/useDisplayNameTranslation';
@@ -142,6 +142,24 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
     }
   }, [coffeeBean.beanName]);
 
+  const handleJsonDownload = useCallback(() => {
+    const dataToDownload = {
+      coffeeBean,
+      colors,
+      params,
+    };
+    const jsonString = JSON.stringify(dataToDownload, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = `${coffeeBean.beanName}_data.json`;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [coffeeBean, colors, params]);
+
   const handleSaveToSupabase = () => {
     alert('Supabase 저장 기능은 Phase 2에서 구현됩니다!');
   };
@@ -205,6 +223,9 @@ const MeshGradientEditor: React.FC<MeshGradientEditorProps> = ({
           <div className="w-full flex justify-end items-center space-x-4">
             <button onClick={handleDownload} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm" title="Download as PNG">
               <HiPhotograph className="h-6 w-6" />
+            </button>
+            <button onClick={handleJsonDownload} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm" title="Download as JSON">
+              <HiDocumentDownload className="h-6 w-6" />
             </button>
             <button onClick={handleSaveToSupabase} className="w-12 h-12 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-full flex items-center justify-center transition-colors duration-200 shadow-sm" title="Save to Supabase">
               <HiArchive className="h-6 w-6" />

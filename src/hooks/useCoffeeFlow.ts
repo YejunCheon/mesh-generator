@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { CoffeeBean, ColorRecommendation as ColorRec } from '../types';
+import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from '../types';
 
 export type CoffeeFlowStep = 
   | 'coffee-input'
@@ -14,6 +14,7 @@ interface CoffeeFlowState {
   coffeeBean: CoffeeBean | null;
   colors: ColorRec[];
   selectedColors: ColorRec[];
+  meshGradientParams: MeshGradientParams;
 }
 
 export const useCoffeeFlow = () => {
@@ -21,7 +22,14 @@ export const useCoffeeFlow = () => {
     currentStep: 'coffee-input',
     coffeeBean: null,
     colors: [],
-    selectedColors: []
+    selectedColors: [],
+    meshGradientParams: {
+      noiseIntensity: 50,
+      gradientDirection: 0,
+      blendMode: 'overlay',
+      colorDistribution: 'uniform',
+      borderStyle: 'rounded',
+    }
   });
 
   const startCoffeeInputFlow = useCallback(() => {
@@ -68,6 +76,17 @@ export const useCoffeeFlow = () => {
       ...prev,
       currentStep: 'mesh-gradient-editor',
       selectedColors
+    }));
+  }, []);
+
+  const startMeshGradientEditorWithImportedData = useCallback((data: { coffeeBean: CoffeeBean, colors: ColorRec[], params: MeshGradientParams }) => {
+    setFlowState(prev => ({
+      ...prev,
+      currentStep: 'mesh-gradient-editor',
+      coffeeBean: data.coffeeBean,
+      colors: data.colors,
+      selectedColors: data.colors,
+      meshGradientParams: data.params,
     }));
   }, []);
 
@@ -128,12 +147,20 @@ export const useCoffeeFlow = () => {
     }));
   }, []);
 
+  const updateMeshGradientParams = useCallback((params: MeshGradientParams) => {
+    setFlowState(prev => ({
+      ...prev,
+      meshGradientParams: params,
+    }));
+  }, []);
+
   return {
     // State
     currentStep: flowState.currentStep,
     coffeeBean: flowState.coffeeBean,
     colors: flowState.colors,
     selectedColors: flowState.selectedColors,
+    meshGradientParams: flowState.meshGradientParams,
     
     // Flow control
     startCoffeeInputFlow,
@@ -142,6 +169,7 @@ export const useCoffeeFlow = () => {
     startCoffeeSummaryFlow,
     startColorSelectionFlow,
     startMeshGradientEditorFlow,
+    startMeshGradientEditorWithImportedData,
     
     // Navigation
     goBack,
@@ -150,6 +178,7 @@ export const useCoffeeFlow = () => {
     // State updates
     updateCoffeeBean,
     setColors,
-    setSelectedColors
+    setSelectedColors,
+    updateMeshGradientParams
   };
 };

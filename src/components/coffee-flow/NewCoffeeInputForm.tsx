@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
-import { CoffeeBean, SingleOriginDetails, BlendDetails, RoastLevel } from '../../types';
+import { CoffeeBean, SingleOriginDetails, BlendDetails, RoastLevel, MeshGradientParams, ColorRecommendation as ColorRec } from '../../types';
 import { HiPencil } from 'react-icons/hi';
 
 interface NewCoffeeInputFormProps {
   onSubmit: (data: CoffeeBean) => void;
+  onImport: (data: { coffeeBean: CoffeeBean, colors: ColorRec[], params: MeshGradientParams }) => void;
 }
 
 // A simple, flat shape for the form state
@@ -18,9 +19,38 @@ interface CoffeeFormShape {
   blend: BlendDetails;
 }
 
-const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => {
+const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit, onImport }) => {
   const [originType, setOriginType] = useState<'single' | 'blending'>('single');
   const [isEditingDisplayName, setIsEditingDisplayName] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result;
+          if (typeof content === 'string') {
+            const data = JSON.parse(content);
+            // Basic validation
+            if (data.coffeeBean && data.colors && data.params) {
+              onImport(data);
+            } else {
+              alert('Invalid JSON file format.');
+            }
+          }
+        } catch (error) {
+          alert('Error parsing JSON file.');
+        }
+      };
+      reader.readAsText(file);
+    }
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
   
   const { register, handleSubmit, control, watch, setValue } = useForm<CoffeeFormShape>({
     defaultValues: {
@@ -212,6 +242,19 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
 
         <div className="pt-6 border-t">
           <button type="submit" className="w-full btn-primary py-4 text-base">다음 단계로</button>
+        </div>
+
+        <div className="text-center">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".json"
+            style={{ display: 'none' }}
+          />
+          <button type="button" onClick={handleImportClick} className="text-sm font-medium text-gray-600 hover:underline">
+            기존 정보 불러오기 (.json)
+          </button>
         </div>
       </form>
     </div>
