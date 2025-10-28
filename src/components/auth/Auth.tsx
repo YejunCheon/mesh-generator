@@ -5,10 +5,12 @@ interface AuthProps {
   onSuccess?: () => void;
 }
 
+
 const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +22,13 @@ const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
     try {
       let response;
       if (isSignUp) {
-        response = await supabase.auth.signUp({ email, password });
+        response = await supabase.auth.signUp({ 
+          email, 
+          password, 
+          options: { 
+            data: { username }
+          }
+        });
       } else {
         response = await supabase.auth.signInWithPassword({ email, password });
       }
@@ -44,6 +52,7 @@ const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
 
   const TabButton: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
     <button
+      type="button"
       onClick={onClick}
       className={`w-1/2 py-3 text-center text-base font-medium transition-colors duration-200 focus:outline-none -mb-px ${
         active
@@ -56,13 +65,26 @@ const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
   );
 
   return (
-    <div className="bg-white rounded-xl shadow-lg p-8 border border-gray-200 mx-auto">
+    <div>
       <div className="flex border-b border-gray-200">
         <TabButton active={!isSignUp} onClick={() => setIsSignUp(false)}>로그인</TabButton>
         <TabButton active={isSignUp} onClick={() => setIsSignUp(true)}>회원가입</TabButton>
       </div>
 
       <form onSubmit={handleAuthAction} className="space-y-6 mt-8">
+        {isSignUp && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">닉네임</label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="사용할 닉네임을 입력하세요"
+              className="input-field w-full"
+              required
+            />
+          </div>
+        )}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">이메일</label>
           <input
@@ -80,7 +102,7 @@ const Auth: React.FC<AuthProps> = ({ onSuccess }) => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
+            placeholder="•••••••• (6자 이상)"
             className="input-field w-full"
             required
           />
