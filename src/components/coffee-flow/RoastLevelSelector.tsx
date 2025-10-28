@@ -13,8 +13,9 @@ interface RoastLevelSelectorProps {
 const roastLevelOptions: { value: RoastLevel; label: string }[] = [
   { value: 'light', label: '라이트' },
   { value: 'medium', label: '미디엄' },
+  { value: 'full-city', label: '풀 시티' },
+  { value: 'vienna', label: '비엔나' },
   { value: 'dark', label: '다크' },
-  { value: 'espresso', label: '에스프레소' },
 ];
 
 const RoastLevelSelector: React.FC<RoastLevelSelectorProps> = ({

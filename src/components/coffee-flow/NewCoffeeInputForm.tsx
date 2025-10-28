@@ -13,7 +13,7 @@ interface CoffeeFormShape {
   displayName: string;
   roastLevel?: RoastLevel;
   flavorNotes: string[];
-  intensity: { acidity: number; sweetness: number; body: number; };
+  intensity: { acidity: number; sweetness: number; body: number; aroma: number; };
   origin: SingleOriginDetails;
   blend: BlendDetails;
 }
@@ -42,7 +42,8 @@ const NewCoffeeInputForm: React.FC<NewCoffeeInputFormProps> = ({ onSubmit }) => 
       intensity: {
         acidity: 5,
         sweetness: 5,
-        body: 5
+        body: 5,
+        aroma: 5
       }
     }
   });

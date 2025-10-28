@@ -55,6 +55,16 @@ const IntensitySelector: React.FC<IntensitySelectorProps> = ({ coffeeBean, onInt
               showProgressBar={true}
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-4">향 (Aroma)</label>
+            <DiscreteSlider
+              value={coffeeBean.intensity.aroma}
+              onChange={(value) => onIntensityChange({ aroma: Number(value) })}
+              options={intensityOptions}
+              showProgressBar={true}
+            />
+          </div>
         </div>
       </div>
     </div>

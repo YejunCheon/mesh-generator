@@ -1,4 +1,4 @@
-export type RoastLevel = 'light' | 'medium' | 'dark' | 'espresso';
+export type RoastLevel = 'light' | 'medium' | 'full-city' | 'vienna' | 'dark';
 
 export interface SingleOriginDetails {
   country: string;
@@ -27,6 +27,7 @@ interface CoffeeBeanBase {
     acidity: number; // 1-10
     sweetness: number; // 1-10
     body: number; // 1-10
+    aroma: number; // 1-10
   };
 }
 

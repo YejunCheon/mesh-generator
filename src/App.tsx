@@ -7,7 +7,7 @@ import StepLayout from './components/ui/StepLayout';
 import IntensitySelector from './components/coffee-flow/IntensitySelector';
 import FlavorNoteSelector from './components/coffee-flow/FlavorNoteSelector';
 import ProgressBar from './components/ui/ProgressBar';
-import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams, RoastLevel } from './types';
+import { CoffeeBean, ColorRecommendation as ColorRec, MeshGradientParams } from './types';
 import { useCoffeeFlow } from './hooks/useCoffeeFlow';
 import { generateColorsWithGemini } from './services/geminiService';
 import RoastLevelSelector from './components/coffee-flow/RoastLevelSelector';
@@ -155,7 +155,7 @@ function App() {
       <div className="container mx-auto px-4 py-8">
         <header className="text-center mb-12">
           <h1 className="text-5xl font-bold text-black mb-4">
-            Mesh Gradient Card Generator
+            Typed Brew
           </h1>
         </header>
 
